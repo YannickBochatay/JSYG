@@ -1,0 +1,31 @@
+{
+    "name": "jsyg-vect",
+    "authors" : ["Yannick Bochatay"],
+    "description" : "Vectors constructor for JSYG",
+    "main": "JSYG.Vect.js",
+    "moduleType": [
+        "amd",
+        "globals"
+    ],
+    "dependencies": {
+        "jsyg-point":"latest"
+    },
+    "devDependencies": {
+        "qunit": "latest",
+        "requirejs": "latest",
+        "jsyg-wrapper":"latest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/YannickBochatay/JSYG.Vect.git"
+    },
+    "license": "MIT",
+    "ignore": ["**/.*","tests","bower_components","nbproject"],
+    "keywords": [
+        "svg",
+        "jsyg",
+        "jquery",
+        "javascript",
+        "library"
+    ]
+}

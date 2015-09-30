@@ -1,0 +1,28 @@
+{
+    "name": "jsyg-strutils",
+    "authors" : ["Yannick Bochatay"],
+    "description" : "String utilitaries for JSYG framework or standalone",
+    "main": "JSYG-strutils.js",
+    "moduleType": [
+        "amd",
+        "globals"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "qunit": "latest",
+        "requirejs": "latest",
+        "jsyg-wrapper":"latest"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/YannickBochatay/JSYG-strutils.git"
+    },
+    "license": "MIT",
+    "ignore": ["**/.*","tests","bower_components","nbproject"],
+    "keywords": [
+        "jsyg",
+        "javascript",
+        "library",
+        "string"
+    ]
+}
