@@ -1,10 +1,12 @@
+/*jshint forin:false, eqnull:true */
+
 (function(root,factory) {
 	
     if (typeof define == "function" && define.amd) define("jsyg-wrapper",["jquery"],factory);
     else if (!root.jQuery) throw new Error("jQuery is needed");
-    else root.JSYG = factory(jQuery);	
+    else root.JSYG = factory(root.jQuery);	
 	
-})(this,function(jQuery) {
+})(this,function($) {
 			
     "use strict";
 		
@@ -15,8 +17,7 @@
     },
     rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     rsvgLink = /^<(svg:a)\s*\/?>(?:<\/\1>|)$/,
-    svg = window.document && window.document.createElementNS && window.document.createElementNS(NS.svg,'svg'),
-    $ = jQuery;
+    svg = window.document && window.document.createElementNS && window.document.createElementNS(NS.svg,'svg');
 	
     function JSYG(arg,context) {
 		
@@ -94,13 +95,13 @@
     JSYG.ns = NS;
 	
     JSYG.prototype.isSVG = function() {
-        return this[0] && this[0].namespaceURI == NS.svg;
+        return !!this[0] && this[0].namespaceURI == NS.svg;
     };
 	
     JSYG.prototype.isSVGroot = function() {
         if (this[0].tagName != 'svg') return false;
         var parent = new JSYG(this[0]).parent();
-        return parent.length && !parent.isSVG();
+        return !!parent.length && !parent.isSVG();
     };
 	
     /**
@@ -265,7 +266,9 @@
     };
 	
     var rCamelCase = /[A-Z]/g,
-    rDash = /-([a-z])/ig;
+    rDash = /-([a-z])/ig,
+    rNumNunit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]{0,8})$/i,
+    rNumNonPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
 		
     function dasherize(str) {
         return str.replace(rCamelCase,function(str){ return '-'+str.toLowerCase();});
@@ -274,10 +277,14 @@
     function camelize(str) {
         return str.replace(rDash,function(p,p1){ return p1.toUpperCase();});
     }
+    
+    function testVal(val) {
+        return val != null && val != "" && val != "auto" && !rNumNonPx.test(val);
+    }
 		
     JSYG.prototype.css = function(prop,val) {
-		
-        var n=null,obj;
+        		
+        var n=null,obj,cssProp,jsProp,style;
 		
         if ($.isPlainObject(prop)) {
 			
@@ -298,7 +305,7 @@
             });
         }
 				
-        var cssProp = dasherize(prop),
+        cssProp = dasherize(prop);
         jsProp = camelize(prop);
 		
         if (val == null) {
@@ -306,15 +313,26 @@
             if (this.isSVG()) {
 				
                 if (this[0].style) {
+                    
+                    style = this[0].style;
 					
-                    val = this[0].style[jsProp];
+                    val = style[jsProp];
 					
-                    if (!val && this[0].getAttribute) {
+                    if (!testVal(val) && this[0].getAttribute) {
 					
                         val = this[0].getAttribute(cssProp);
 					
-                        if (val == null && window.getComputedStyle)
-                            val = window.getComputedStyle(this[0],null).getPropertyValue(cssProp);
+                        if (!testVal(val)) {
+                            
+                            val = $.fn.css.call(this,prop);
+                            
+                            if (!testVal(val) && ["width","height","x","y"].indexOf(cssProp) != -1 && this[0].getBBox) {
+                                
+                                val = this[0].getBBox();
+                                val = val[cssProp]+"px";
+                            }
+                        }
+                            
                     }
                 }
             }
@@ -324,7 +342,7 @@
         }
 		
         return this.each(function() {
-			
+            		
             var $this = new JSYG(this);
 			
             if ($this.isSVG()) {
@@ -358,87 +376,71 @@
 	
     JSYG.prototype.position = function() {
 		
-        if (!this.isSVG()) return $.fn.position.call(this);
+        if (!this.isSVG() || this.isSVGroot()) return $.fn.position.call(this);
 		
-        var dim,box,
-        tag = this[0].tagName;
+        var tag = this[0].tagName,
 			
-        if (tag == 'svg') {
-			
-            if (this.parent().isSVG()) {
-				
-                dim = {
-                    left : parseFloat(this.attr('x')) || 0,
-                    top : parseFloat(this.attr('y')) || 0
-                };
-            }
-            else dim = $.fn.position.call(this);
-        }
-        else {
-			
-            box = this[0].getBBox();
+            box = this[0].getBBox(),
 			
             dim = { //box est en lecture seule
                 left : box.x,
                 top : box.y
             };
-			
-            if (tag === 'use' && !JSYG.support.svgUseBBox) {
-                //bbox fait alors référence à l'élément source donc il faut ajouter les attributs de l'élément lui-meme
-                dim.left += parseFloat(this.attr('x'))  || 0;
-                dim.top += parseFloat(this.attr('y')) || 0;
-            }
+
+        if (tag === 'use' && !JSYG.support.svgUseBBox) {
+            //bbox fait alors référence à l'élément source donc il faut ajouter les attributs de l'élément lui-meme
+            dim.left += parseFloat(this.css('x')) || 0;
+            dim.top += parseFloat(this.css('y')) || 0;
         }
 		
         return dim;
     };
 	
-    JSYG.prototype.offset = function(coordinates) {
+    JSYG.prototype.offset = function() {
 		
         var x,y,box,mtx,point,offset;
 		
-        if (!coordinates) {
-									
-            if (!this.isSVG()) return $.fn.offset.call(this);
-						
-            if (this[0].tagName == "svg") {
-				
-                if (this.isSVGroot()) {
-                    x = 0;
-                    y = 0;
-                }
-                else {
-                    x = parseFloat(this.attr('x')) || 0;
-                    y = parseFloat(this.attr('y')) || 0;
-                }
-										
-                box = this.attr("viewBox");
-                if (box) this.attrRemove("viewBox");
-				
-                mtx = this[0].getScreenCTM();
-							
-                if (box) this.attr("viewBox",box);
-				
-                point = svg.createSVGPoint();
-                point.x = x;
-                point.y = y;
-                point = point.matrixTransform(mtx);
-								
-                offset = {
-                    left : point.x,
-                    top : point.y
-                };
-				
+        if (!this.isSVG()) return $.fn.offset.call(this);
+        
+        if (arguments[0]) throw new Error("Sorry, this is not implemented");
+
+        if (this[0].tagName == "svg") {
+
+            if (this.isSVGroot()) {
+                x = 0;
+                y = 0;
             }
-            else offset = this[0].getBoundingClientRect();
-															
+            else {
+                x = parseFloat(this.css('x')) || 0;
+                y = parseFloat(this.css('y')) || 0;
+            }
+
+            box = this.attr("viewBox");
+            if (box) this.attrRemove("viewBox");
+
+            mtx = this[0].getScreenCTM();
+
+            if (box) this.attr("viewBox",box);
+
+            point = svg.createSVGPoint();
+            point.x = x;
+            point.y = y;
+            point = point.matrixTransform(mtx);
+
             offset = {
-                left : Math.round( offset.left + window.pageXOffset - document.documentElement.clientLeft ),
-                top : Math.round( offset.top + window.pageYOffset - document.documentElement.clientTop )
+                left : point.x,
+                top : point.y
             };
-			
-            return offset;
+
         }
+        else offset = this[0].getBoundingClientRect();
+
+        offset = {
+            left : Math.round( offset.left + window.pageXOffset - document.documentElement.clientLeft ),
+            top : Math.round( offset.top + window.pageYOffset - document.documentElement.clientTop )
+        };
+
+        return offset;
     };
 	
     JSYG.prototype.addClass = function(name) {
@@ -645,20 +647,23 @@
             set: function( elem, value ) {
 				
                 var $elem = new JSYG(elem),
-                width = hookWidthOri.set.apply(null,arguments);
+                    width = hookWidthOri.set.apply(null,arguments),
+                    matches, i;
 								
                 if (!$elem.isSVG()) return width;
 				
-                width = parseFloat( (typeof value == "function") ? value.call(elem,i,$elem.width()) : value );
-				
+                width = (typeof value == "function" ? value.call(elem,i,$elem.width()) : value );
+                    
                 switch (elem.tagName) {
 				
                     case 'circle' :
-                        elem.setAttribute('r',width/2);
+                        matches = rNumNunit.exec(width);
+                        elem.setAttribute('r',(matches[1]/2)+matches[2]);
                         break;
 					
                     case 'ellipse' :
-                        elem.setAttribute('rx',width/2);
+                        matches = rNumNunit.exec(width);
+                        elem.setAttribute('rx',(matches[1]/2)+matches[2]);
                         break;
 					
                     default :
@@ -680,20 +685,25 @@
 			
             set: function( elem, value ) {
 				
-                var height = hookHeightOri.set.apply(null,arguments);
+                var $elem = new JSYG(elem),
+                    height = hookHeightOri.set.apply(null,arguments),
+                    matches,
+                    i;
 								
-                if (elem.namespaceURI != NS.svg) return height;
+                if (!$elem.isSVG()) return height;
 				
-                height = parseFloat( (typeof value == "function") ? value.call(elem,i,$elem.height()) : value );
+                height = (typeof value == "function") ? value.call(elem,i,$elem.height()) : value;
 				
                 switch (this.tagName) {
-				
-                    case 'circle' :
-                        elem.setAttribute('r',height/2);
+                    
+                     case 'circle' :
+                        matches = rNumNunit.exec(height);
+                        elem.setAttribute('r',(matches[1]/2)+matches[2]);
                         break;
 					
                     case 'ellipse' :
-                        elem.setAttribute('ry',height/2);
+                        matches = rNumNunit.exec(height);
+                        elem.setAttribute('ry',(matches[1]/2)+matches[2]);
                         break;
 					
                     default :
@@ -710,7 +720,7 @@
     //Ces fonctions font appel dans jQuery à this.constructor, ce qui peut
     //mettre le bazar quand on surcharge les constructeurs
     JSYG.prototype.pushStack = function( elems ) {
-        var ret = jQuery.merge(new JSYG(), elems );
+        var ret = $.merge(new JSYG(), elems );
         ret.prevObject = this;
         ret.context = this.context;
         return ret;

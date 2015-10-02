@@ -1,10 +1,12 @@
+/*jshint forin:false, eqnull:true */
+
 (function(root,factory) {
 	
     if (typeof define == "function" && define.amd) define("jsyg-wrapper",["jquery"],factory);
     else if (!root.jQuery) throw new Error("jQuery is needed");
-    else root.JSYG = factory(jQuery);	
+    else root.JSYG = factory(root.jQuery);	
 	
-})(this,function(jQuery) {
+})(this,function($) {
 			
     "use strict";
 		
@@ -15,8 +17,7 @@
     },
     rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/,
     rsvgLink = /^<(svg:a)\s*\/?>(?:<\/\1>|)$/,
-    svg = window.document && window.document.createElementNS && window.document.createElementNS(NS.svg,'svg'),
-    $ = jQuery;
+    svg = window.document && window.document.createElementNS && window.document.createElementNS(NS.svg,'svg');
 	
     function JSYG(arg,context) {
 		
@@ -94,13 +95,13 @@
     JSYG.ns = NS;
 	
     JSYG.prototype.isSVG = function() {
-        return this[0] && this[0].namespaceURI == NS.svg;
+        return !!this[0] && this[0].namespaceURI == NS.svg;
     };
 	
     JSYG.prototype.isSVGroot = function() {
         if (this[0].tagName != 'svg') return false;
         var parent = new JSYG(this[0]).parent();
-        return parent.length && !parent.isSVG();
+        return !!parent.length && !parent.isSVG();
     };
 	
     /**
@@ -265,7 +266,9 @@
     };
 	
     var rCamelCase = /[A-Z]/g,
-    rDash = /-([a-z])/ig;
+    rDash = /-([a-z])/ig,
+    rNumNunit = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))([a-z%]{0,8})$/i,
+    rNumNonPx = /^([+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|))(?!px)[a-z%]+$/i;
 		
     function dasherize(str) {
         return str.replace(rCamelCase,function(str){ return '-'+str.toLowerCase();});
@@ -274,10 +277,14 @@
     function camelize(str) {
         return str.replace(rDash,function(p,p1){ return p1.toUpperCase();});
     }
+    
+    function testVal(val) {
+        return val != null && val != "" && val != "auto" && !rNumNonPx.test(val);
+    }
 		
     JSYG.prototype.css = function(prop,val) {
-		
-        var n=null,obj;
+        		
+        var n=null,obj,cssProp,jsProp,style;
 		
         if ($.isPlainObject(prop)) {
 			
@@ -298,7 +305,7 @@
             });
         }
 				
-        var cssProp = dasherize(prop),
+        cssProp = dasherize(prop);
         jsProp = camelize(prop);
 		
         if (val == null) {
@@ -306,15 +313,26 @@
             if (this.isSVG()) {
 				
                 if (this[0].style) {
+                    
+                    style = this[0].style;
 					
-                    val = this[0].style[jsProp];
+                    val = style[jsProp];
 					
-                    if (!val && this[0].getAttribute) {
+                    if (!testVal(val) && this[0].getAttribute) {
 					
                         val = this[0].getAttribute(cssProp);
 					
-                        if (val == null && window.getComputedStyle)
-                            val = window.getComputedStyle(this[0],null).getPropertyValue(cssProp);
+                        if (!testVal(val)) {
+                            
+                            val = $.fn.css.call(this,prop);
+                            
+                            if (!testVal(val) && ["width","height","x","y"].indexOf(cssProp) != -1 && this[0].getBBox) {
+                                
+                                val = this[0].getBBox();
+                                val = val[cssProp]+"px";
+                            }
+                        }
+                            
                     }
                 }
             }
@@ -324,7 +342,7 @@
         }
 		
         return this.each(function() {
-			
+            		
             var $this = new JSYG(this);
 			
             if ($this.isSVG()) {
@@ -358,87 +376,71 @@
 	
     JSYG.prototype.position = function() {
 		
-        if (!this.isSVG()) return $.fn.position.call(this);
+        if (!this.isSVG() || this.isSVGroot()) return $.fn.position.call(this);
 		
-        var dim,box,
-        tag = this[0].tagName;
+        var tag = this[0].tagName,
 			
-        if (tag == 'svg') {
-			
-            if (this.parent().isSVG()) {
-				
-                dim = {
-                    left : parseFloat(this.attr('x')) || 0,
-                    top : parseFloat(this.attr('y')) || 0
-                };
-            }
-            else dim = $.fn.position.call(this);
-        }
-        else {
-			
-            box = this[0].getBBox();
+            box = this[0].getBBox(),
 			
             dim = { //box est en lecture seule
                 left : box.x,
                 top : box.y
             };
-			
-            if (tag === 'use' && !JSYG.support.svgUseBBox) {
-                //bbox fait alors référence à l'élément source donc il faut ajouter les attributs de l'élément lui-meme
-                dim.left += parseFloat(this.attr('x'))  || 0;
-                dim.top += parseFloat(this.attr('y')) || 0;
-            }
+
+        if (tag === 'use' && !JSYG.support.svgUseBBox) {
+            //bbox fait alors référence à l'élément source donc il faut ajouter les attributs de l'élément lui-meme
+            dim.left += parseFloat(this.css('x')) || 0;
+            dim.top += parseFloat(this.css('y')) || 0;
         }
 		
         return dim;
     };
 	
-    JSYG.prototype.offset = function(coordinates) {
+    JSYG.prototype.offset = function() {
 		
         var x,y,box,mtx,point,offset;
 		
-        if (!coordinates) {
-									
-            if (!this.isSVG()) return $.fn.offset.call(this);
-						
-            if (this[0].tagName == "svg") {
-				
-                if (this.isSVGroot()) {
-                    x = 0;
-                    y = 0;
-                }
-                else {
-                    x = parseFloat(this.attr('x')) || 0;
-                    y = parseFloat(this.attr('y')) || 0;
-                }
-										
-                box = this.attr("viewBox");
-                if (box) this.attrRemove("viewBox");
-				
-                mtx = this[0].getScreenCTM();
-							
-                if (box) this.attr("viewBox",box);
-				
-                point = svg.createSVGPoint();
-                point.x = x;
-                point.y = y;
-                point = point.matrixTransform(mtx);
-								
-                offset = {
-                    left : point.x,
-                    top : point.y
-                };
-				
+        if (!this.isSVG()) return $.fn.offset.call(this);
+        
+        if (arguments[0]) throw new Error("Sorry, this is not implemented");
+
+        if (this[0].tagName == "svg") {
+
+            if (this.isSVGroot()) {
+                x = 0;
+                y = 0;
             }
-            else offset = this[0].getBoundingClientRect();
-															
+            else {
+                x = parseFloat(this.css('x')) || 0;
+                y = parseFloat(this.css('y')) || 0;
+            }
+
+            box = this.attr("viewBox");
+            if (box) this.attrRemove("viewBox");
+
+            mtx = this[0].getScreenCTM();
+
+            if (box) this.attr("viewBox",box);
+
+            point = svg.createSVGPoint();
+            point.x = x;
+            point.y = y;
+            point = point.matrixTransform(mtx);
+
             offset = {
-                left : Math.round( offset.left + window.pageXOffset - document.documentElement.clientLeft ),
-                top : Math.round( offset.top + window.pageYOffset - document.documentElement.clientTop )
+                left : point.x,
+                top : point.y
             };
-			
-            return offset;
+
         }
+        else offset = this[0].getBoundingClientRect();
+
+        offset = {
+            left : Math.round( offset.left + window.pageXOffset - document.documentElement.clientLeft ),
+            top : Math.round( offset.top + window.pageYOffset - document.documentElement.clientTop )
+        };
+
+        return offset;
     };
 	
     JSYG.prototype.addClass = function(name) {
@@ -645,20 +647,23 @@
             set: function( elem, value ) {
 				
                 var $elem = new JSYG(elem),
-                width = hookWidthOri.set.apply(null,arguments);
+                    width = hookWidthOri.set.apply(null,arguments),
+                    matches, i;
 								
                 if (!$elem.isSVG()) return width;
 				
-                width = parseFloat( (typeof value == "function") ? value.call(elem,i,$elem.width()) : value );
-				
+                width = (typeof value == "function" ? value.call(elem,i,$elem.width()) : value );
+                    
                 switch (elem.tagName) {
 				
                     case 'circle' :
-                        elem.setAttribute('r',width/2);
+                        matches = rNumNunit.exec(width);
+                        elem.setAttribute('r',(matches[1]/2)+matches[2]);
                         break;
 					
                     case 'ellipse' :
-                        elem.setAttribute('rx',width/2);
+                        matches = rNumNunit.exec(width);
+                        elem.setAttribute('rx',(matches[1]/2)+matches[2]);
                         break;
 					
                     default :
@@ -680,20 +685,25 @@
 			
             set: function( elem, value ) {
 				
-                var height = hookHeightOri.set.apply(null,arguments);
+                var $elem = new JSYG(elem),
+                    height = hookHeightOri.set.apply(null,arguments),
+                    matches,
+                    i;
 								
-                if (elem.namespaceURI != NS.svg) return height;
+                if (!$elem.isSVG()) return height;
 				
-                height = parseFloat( (typeof value == "function") ? value.call(elem,i,$elem.height()) : value );
+                height = (typeof value == "function") ? value.call(elem,i,$elem.height()) : value;
 				
                 switch (this.tagName) {
-				
-                    case 'circle' :
-                        elem.setAttribute('r',height/2);
+                    
+                     case 'circle' :
+                        matches = rNumNunit.exec(height);
+                        elem.setAttribute('r',(matches[1]/2)+matches[2]);
                         break;
 					
                     case 'ellipse' :
-                        elem.setAttribute('ry',height/2);
+                        matches = rNumNunit.exec(height);
+                        elem.setAttribute('ry',(matches[1]/2)+matches[2]);
                         break;
 					
                     default :
@@ -710,7 +720,7 @@
     //Ces fonctions font appel dans jQuery à this.constructor, ce qui peut
     //mettre le bazar quand on surcharge les constructeurs
     JSYG.prototype.pushStack = function( elems ) {
-        var ret = jQuery.merge(new JSYG(), elems );
+        var ret = $.merge(new JSYG(), elems );
         ret.prevObject = this;
         ret.context = this.context;
         return ret;
@@ -1487,7 +1497,7 @@
         
         return this;
     };
-    
+       
     /**
      * récupère ou fixe les attributs de la viewBox d'un élément SVG (qui dispose de cet attribut, essentiellement les balise &lt;svg&gt;)
      * @param dim optionnel, objet, si défini fixe les attributs
@@ -1495,22 +1505,24 @@
      */
     JSYG.prototype.viewBox = function(dim) {
         
-        var val;
+        var viewBoxElmts = ["svg","symbol","image","marker","pattern","view"],
+            val;
         
         this.each(function() {
             
-            if (this.tagName!= 'svg') throw new Error("la méthode viewBox ne s'applique qu'aux conteneurs svg.");
+            if (viewBoxElmts.indexOf(this.tagName) == -1) throw new Error(this.tagName+" is not a valid element.");
             
-            var viewBoxInit = this.viewBox.baseVal;
-            var viewBox = viewBoxInit || {} ;
+            var viewBoxInit = this.viewBox.baseVal,
+                viewBox = viewBoxInit || {},
+                $this = new JSYG(this);
             
             if (dim == null) {
                 
                 val = {
                     x : viewBox.x || 0,
                     y : viewBox.y || 0,
-                    width : viewBox.width || parseFloat(this.getAttribute('width')),
-                    height : viewBox.height || parseFloat(this.getAttribute('height'))
+                    width : viewBox.width || parseFloat($this.css('width')),
+                    height : viewBox.height || parseFloat($this.css('height'))
                 };
                 
                 return false;
@@ -1846,12 +1858,12 @@
     /**
      * Récupération des dimensions de l'élément sous forme d'objet avec les propriétés x,y,width,height.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
-     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'ï¿½paisseur du tracï¿½ (stroke-width)
+     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'épaisseur du tracé (stroke-width)
      * @param type
      * <ul>
-     * <li>null : dimensions avant toute transformation par rapport au parent positionnï¿½ (viewport pour les éléments svg)</li>
+     * <li>null : dimensions avant toute transformation par rapport au parent positionné (viewport pour les éléments svg)</li>
      * <li>"page" : dimensions dans la page</li>
-     * <li>"screen" : dimensions à l'ï¿½cran</li>
+     * <li>"screen" : dimensions à l'écran</li>
      * <li>objet DOM : dimensions relativement à cet objet</li>
      * @returns {Object} objet avec les propriétés x,y,width,height
      */
@@ -2091,9 +2103,9 @@
         });
     }
     /**
-     * définit les dimensions de la collection par rapport au parent positionnï¿½, avant transformation.
+     * définit les dimensions de la collection par rapport au parent positionné, avant transformation.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
-     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'ï¿½paisseur du tracï¿½ (stroke-width).<br/><br/>
+     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'épaisseur du tracé (stroke-width).<br/><br/>
      * En argument, au choix :
      * <ul>
      * <li>1 argument : objet avec les propriétés parmi x,y,width,height.</li>
@@ -2240,7 +2252,7 @@
 
                     break;
                             
-                case 'text' : case 'use' : //on peut ré©percuter x et y mais pas width ni height
+                case 'text' : case 'use' : //on peut répercuter x et y mais pas width ni height
 
                     if (('x' in opt || 'y' in opt) && !this.parentNode) throw new Error("Pour fixer la position d'un élément \""+tag+"\", il faut d'abord l'attacher à l'arbre DOM");
 
@@ -2408,10 +2420,10 @@
                         
                         
     /**
-     * Utile plutÃ´t en interne ou pour la création de plugins.
-     * récupère le dï¿½calage (pour les transformations) en pixels à partir d'arguments de types diffï¿½rents.
-     * @param pivotX 'left','right','center', nombre ou pourcentage. Si non renseignï¿½, l'origine par défaut de l'élément ("center")
-     * @param pivotY 'top','bottom','center', nombre ou pourcentage. Si non renseignï¿½, l'origine par défaut de l'élément ("center")
+     * Utile plutot en interne ou pour la création de plugins.
+     * récupère le décalage (pour les transformations) en pixels à partir d'arguments de types différents.
+     * @param pivotX 'left','right','center', nombre ou pourcentage. Si non renseigné, l'origine par défaut de l'élément ("center")
+     * @param pivotY 'top','bottom','center', nombre ou pourcentage. Si non renseigné, l'origine par défaut de l'élément ("center")
      * @returns {Vect}
      * @see JSYG.prototype.transfOrigin
      */
@@ -2460,7 +2472,7 @@
      * @param x chaÃ®ne, origine horizontale
      * @param y chaÃ®ne, origine verticale
      * @link https://developer.mozilla.org/en/CSS/transform-origin
-     * @returns {JSYG} si passé avec un ou des arguments, sinon renvoie une chaÃ®ne reprï¿½sentant l'origine en x et y.
+     * @returns {JSYG} si passé avec un ou des arguments, sinon renvoie une chaÃ®ne représentant l'origine en x et y.
      */
     JSYG.prototype.transfOrigin = function(x,y) {
 
@@ -2651,7 +2663,7 @@
 
     /**
      * Ajoute une transformation à la collection selon la rotation spécifiée, ou récupère la rotation du premier élément de la collection.
-     * @param angle (degrï¿½s)
+     * @param angle (degrés)
      * @returns {JSYG} si angle est défini, valeur de la rotation sinon
      */
     JSYG.prototype.rotate = function(angle) {
@@ -2834,9 +2846,9 @@
      * @param opt si indéfini, répercute la matrice de transformation propre à l'élément.
      * Si défini, il est un objet contenant les propriétés possibles suivantes :
      * <ul>
-     * <li>mtx : instance Matrix pour répercuter les transformations de celle-ci plutï¿½t que de la matrice propre à l'élément</li>
+     * <li>mtx : instance Matrix pour répercuter les transformations de celle-ci plutot que de la matrice propre à l'élément</li>
      * <li>keepRotation : pour les éléments permettant de répercuter la rotation sur les attributs ('circle','line','polyline','polygon','path'),
-     * le choix est donnï¿½ de le faire ou non</li>
+     * le choix est donné de le faire ou non</li>
      * </ul>
      * @returns {JSYG}
      * @example new JSYG('&lt;rect&gt;').attr({x:0,y:0,width:100,height:100}).translate(50,50).mtx2attrs().attr("x") === 50

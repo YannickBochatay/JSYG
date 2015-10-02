@@ -188,7 +188,7 @@
         
         return this;
     };
-    
+       
     /**
      * récupère ou fixe les attributs de la viewBox d'un élément SVG (qui dispose de cet attribut, essentiellement les balise &lt;svg&gt;)
      * @param dim optionnel, objet, si défini fixe les attributs
@@ -196,22 +196,24 @@
      */
     JSYG.prototype.viewBox = function(dim) {
         
-        var val;
+        var viewBoxElmts = ["svg","symbol","image","marker","pattern","view"],
+            val;
         
         this.each(function() {
             
-            if (this.tagName!= 'svg') throw new Error("la méthode viewBox ne s'applique qu'aux conteneurs svg.");
+            if (viewBoxElmts.indexOf(this.tagName) == -1) throw new Error(this.tagName+" is not a valid element.");
             
-            var viewBoxInit = this.viewBox.baseVal;
-            var viewBox = viewBoxInit || {} ;
+            var viewBoxInit = this.viewBox.baseVal,
+                viewBox = viewBoxInit || {},
+                $this = new JSYG(this);
             
             if (dim == null) {
                 
                 val = {
                     x : viewBox.x || 0,
                     y : viewBox.y || 0,
-                    width : viewBox.width || parseFloat(this.getAttribute('width')),
-                    height : viewBox.height || parseFloat(this.getAttribute('height'))
+                    width : viewBox.width || parseFloat($this.css('width')),
+                    height : viewBox.height || parseFloat($this.css('height'))
                 };
                 
                 return false;
@@ -547,12 +549,12 @@
     /**
      * Récupération des dimensions de l'élément sous forme d'objet avec les propriétés x,y,width,height.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
-     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'ï¿½paisseur du tracï¿½ (stroke-width)
+     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'épaisseur du tracé (stroke-width)
      * @param type
      * <ul>
-     * <li>null : dimensions avant toute transformation par rapport au parent positionnï¿½ (viewport pour les éléments svg)</li>
+     * <li>null : dimensions avant toute transformation par rapport au parent positionné (viewport pour les éléments svg)</li>
      * <li>"page" : dimensions dans la page</li>
-     * <li>"screen" : dimensions à l'ï¿½cran</li>
+     * <li>"screen" : dimensions à l'écran</li>
      * <li>objet DOM : dimensions relativement à cet objet</li>
      * @returns {Object} objet avec les propriétés x,y,width,height
      */
@@ -792,9 +794,9 @@
         });
     }
     /**
-     * définit les dimensions de la collection par rapport au parent positionnï¿½, avant transformation.
+     * définit les dimensions de la collection par rapport au parent positionné, avant transformation.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
-     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'ï¿½paisseur du tracï¿½ (stroke-width).<br/><br/>
+     * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'épaisseur du tracé (stroke-width).<br/><br/>
      * En argument, au choix :
      * <ul>
      * <li>1 argument : objet avec les propriétés parmi x,y,width,height.</li>
@@ -941,7 +943,7 @@
 
                     break;
                             
-                case 'text' : case 'use' : //on peut ré©percuter x et y mais pas width ni height
+                case 'text' : case 'use' : //on peut répercuter x et y mais pas width ni height
 
                     if (('x' in opt || 'y' in opt) && !this.parentNode) throw new Error("Pour fixer la position d'un élément \""+tag+"\", il faut d'abord l'attacher à l'arbre DOM");
 
@@ -1109,10 +1111,10 @@
                         
                         
     /**
-     * Utile plutÃ´t en interne ou pour la création de plugins.
-     * récupère le dï¿½calage (pour les transformations) en pixels à partir d'arguments de types diffï¿½rents.
-     * @param pivotX 'left','right','center', nombre ou pourcentage. Si non renseignï¿½, l'origine par défaut de l'élément ("center")
-     * @param pivotY 'top','bottom','center', nombre ou pourcentage. Si non renseignï¿½, l'origine par défaut de l'élément ("center")
+     * Utile plutot en interne ou pour la création de plugins.
+     * récupère le décalage (pour les transformations) en pixels à partir d'arguments de types différents.
+     * @param pivotX 'left','right','center', nombre ou pourcentage. Si non renseigné, l'origine par défaut de l'élément ("center")
+     * @param pivotY 'top','bottom','center', nombre ou pourcentage. Si non renseigné, l'origine par défaut de l'élément ("center")
      * @returns {Vect}
      * @see JSYG.prototype.transfOrigin
      */
@@ -1161,7 +1163,7 @@
      * @param x chaÃ®ne, origine horizontale
      * @param y chaÃ®ne, origine verticale
      * @link https://developer.mozilla.org/en/CSS/transform-origin
-     * @returns {JSYG} si passé avec un ou des arguments, sinon renvoie une chaÃ®ne reprï¿½sentant l'origine en x et y.
+     * @returns {JSYG} si passé avec un ou des arguments, sinon renvoie une chaÃ®ne représentant l'origine en x et y.
      */
     JSYG.prototype.transfOrigin = function(x,y) {
 
@@ -1352,7 +1354,7 @@
 
     /**
      * Ajoute une transformation à la collection selon la rotation spécifiée, ou récupère la rotation du premier élément de la collection.
-     * @param angle (degrï¿½s)
+     * @param angle (degrés)
      * @returns {JSYG} si angle est défini, valeur de la rotation sinon
      */
     JSYG.prototype.rotate = function(angle) {
@@ -1535,9 +1537,9 @@
      * @param opt si indéfini, répercute la matrice de transformation propre à l'élément.
      * Si défini, il est un objet contenant les propriétés possibles suivantes :
      * <ul>
-     * <li>mtx : instance Matrix pour répercuter les transformations de celle-ci plutï¿½t que de la matrice propre à l'élément</li>
+     * <li>mtx : instance Matrix pour répercuter les transformations de celle-ci plutot que de la matrice propre à l'élément</li>
      * <li>keepRotation : pour les éléments permettant de répercuter la rotation sur les attributs ('circle','line','polyline','polygon','path'),
-     * le choix est donnï¿½ de le faire ou non</li>
+     * le choix est donné de le faire ou non</li>
      * </ul>
      * @returns {JSYG}
      * @example new JSYG('&lt;rect&gt;').attr({x:0,y:0,width:100,height:100}).translate(50,50).mtx2attrs().attr("x") === 50
