@@ -23,7 +23,7 @@
         "url": "git://github.com/YannickBochatay/JSYG.git"
     },
     "license": "MIT",
-    "ignore": ["**/.*","tests","bower_components","node_modules","nbproject","package.json","Gruntfile.js","jsyg-amd.js"],
+    "ignore": ["**/.*","tests","bower_components","node_modules","nbproject","package.json","Gruntfile.js","jsyg-amd.js","npm-debug.log"],
     "keywords": [
         "svg",
         "jsyg",

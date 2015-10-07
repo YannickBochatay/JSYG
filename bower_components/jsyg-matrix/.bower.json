@@ -1,0 +1,49 @@
+{
+  "name": "jsyg-matrix",
+  "authors": [
+    "Yannick Bochatay"
+  ],
+  "description": "Matrix constructor for JSYG",
+  "main": "JSYG.Matrix.js",
+  "moduleType": [
+    "amd",
+    "globals"
+  ],
+  "dependencies": {
+    "jsyg-vect": "latest"
+  },
+  "devDependencies": {
+    "qunit": "latest",
+    "requirejs": "latest",
+    "jsyg-wrapper": "latest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/YannickBochatay/JSYG.Matrix.git"
+  },
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "tests",
+    "bower_components",
+    "nbproject"
+  ],
+  "keywords": [
+    "svg",
+    "jsyg",
+    "jquery",
+    "javascript",
+    "library"
+  ],
+  "homepage": "https://github.com/YannickBochatay/JSYG.Matrix",
+  "version": "0.1.2",
+  "_release": "0.1.2",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.1.2",
+    "commit": "d95b743deb112288669d6728f9228aef80908c40"
+  },
+  "_source": "git://github.com/YannickBochatay/JSYG.Matrix.git",
+  "_target": "*",
+  "_originalSource": "jsyg-matrix"
+}

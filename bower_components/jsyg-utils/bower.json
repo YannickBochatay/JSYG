@@ -11,7 +11,8 @@
         "jsyg-wrapper": "latest",
         "jsyg-point":"latest",
         "jsyg-vect":"latest",
-        "jsyg-matrix":"latest"
+        "jsyg-matrix":"latest",
+        "jsyg-strutils":"latest"
     },
     "devDependencies": {
         "qunit": "latest",

@@ -1,14 +1,17 @@
+/*jshint forin:false, eqnull:true*/
+/* globals JSYG,$,Promise*/
+
 (function(root,factory) {
     
-    if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point"],factory);
+    if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
     else if (root.JSYG) {
         
-        if (JSYG.Matrix && JSYG.Vect && JSYG.Point) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point);
+        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point);
         else throw new Error("Missing dependency");
     }
     else throw new Error("JSYG is needed");
     
-})(this,function(JSYG,Matrix,Vect,Point) {
+})(this,function(JSYG,Matrix,Vect,Point,strUtils) {
     
     "use strict";
     
@@ -188,7 +191,7 @@
         
         return this;
     };
-       
+    
     /**
      * récupère ou fixe les attributs de la viewBox d'un élément SVG (qui dispose de cet attribut, essentiellement les balise &lt;svg&gt;)
      * @param dim optionnel, objet, si défini fixe les attributs
@@ -197,15 +200,15 @@
     JSYG.prototype.viewBox = function(dim) {
         
         var viewBoxElmts = ["svg","symbol","image","marker","pattern","view"],
-            val;
+        val;
         
         this.each(function() {
             
             if (viewBoxElmts.indexOf(this.tagName) == -1) throw new Error(this.tagName+" is not a valid element.");
             
             var viewBoxInit = this.viewBox.baseVal,
-                viewBox = viewBoxInit || {},
-                $this = new JSYG(this);
+            viewBox = viewBoxInit || {},
+            $this = new JSYG(this);
             
             if (dim == null) {
                 
@@ -306,7 +309,7 @@
             }
             
             if (!isSVG) this.setAttribute('style',styleAttr);
-        };
+        }
         
         if (recursive) this.walkTheDom(fct);
         else fct.call(this[0]);
@@ -355,7 +358,7 @@
     function getComputedStyle(node) {
         
         return window.getComputedStyle && window.getComputedStyle(node) || node.currentStyle;
-    };
+    }
     
     /**
      * Retire l'attribut de style "style" + tous les attributs svg concernant le style.
@@ -650,11 +653,11 @@
                 height = parseFloat(this.css("height"));
                 
                 viewBox = this.attr("viewBox");
-                viewBox && this.attrRemove("viewBox");
+                if (viewBox) this.attrRemove("viewBox");
                 
                 mtx = this.getMtx('screen');
                 
-                viewBox && this.attr("viewBox",viewBox);
+                if (viewBox) this.attr("viewBox",viewBox);
                 
                 hg = new Vect(x,y).mtx(mtx);
                 bd = new Vect(x+width,y+height).mtx(mtx);
@@ -668,7 +671,7 @@
                 
             } else {
                 
-                if (this.isSVG() && this.rotate() == 0) {
+                if (this.isSVG() && this.rotate() === 0) {
                     
                     //sans rotation, cette méthode est meilleure car getBoundingClientRect
                     //tient compte de l'épaisseur de tracé (stroke-width)
@@ -927,189 +930,194 @@
                     
                     break;
                 
-                case 'line' : case 'polyline' : case 'polygon' : case 'path' :
-                                
+                case 'line' :
+                case 'polyline' :
+                case 'polygon' :
+                case 'path' :
+                    
                     if (!node.parentNode) throw new Error("Pour fixer les dimensions d'un élément \""+tag+"\", il faut d'abord l'attacher à l'arbre DOM");
-
+                    
                     mtx = new Matrix();
                     box = node.getBBox();
-
+                    
                     if ("x" in opt) mtx = mtx.translate(opt.x-box.x,0);
                     if ("y" in opt) mtx = mtx.translate(0,opt.y-box.y);
-                    if ("width" in opt && box.width!=0)	mtx = mtx.scaleX(opt.width/box.width,box.x,box.y);
-                    if ("height" in opt && box.height!=0)	mtx = mtx.scaleY(opt.height/box.height,box.x,box.y);
-
+                    if ("width" in opt && box.width!==0)	mtx = mtx.scaleX(opt.width/box.width,box.x,box.y);
+                    if ("height" in opt && box.height!==0)	mtx = mtx.scaleY(opt.height/box.height,box.x,box.y);
+                    
                     $this.mtx2attrs({mtx:mtx});
-
+                    
                     break;
-                            
-                case 'text' : case 'use' : //on peut répercuter x et y mais pas width ni height
-
+                
+                case 'text' :
+                case 'use' : //on peut répercuter x et y mais pas width ni height
+                    
                     if (('x' in opt || 'y' in opt) && !this.parentNode) throw new Error("Pour fixer la position d'un élément \""+tag+"\", il faut d'abord l'attacher à l'arbre DOM");
-
+                    
                     dim = node.getBBox();
                     mtx = $this.getMtx();
-
+                    
                     if ('x' in opt) {
-
+                        
                         if (tag == 'text') dec = (parseFloat($this.attr("x")) || 0) - dim.x;
                         else {
                             dec = -dim.x;
                             if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('x'));
                         }
-
+                        
                         $this.attr('x',opt.x + dec);
                     }
-
+                    
                     if ('y' in opt) {
-
+                        
                         if (tag == 'text') dec = (parseFloat($this.attr("y")) || 0) - dim.y;
                         else {
                             dec = -dim.y;
                             if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('y'));
                         }
-
+                        
                         $this.attr('y',opt.y + dec);
                     }
-
+                    
                     if ('width' in opt || 'height' in opt) {
-
+                        
                         mtx = new Matrix();
-
-                        if ('width' in opt && dim.width!=0) {
+                        
+                        if ('width' in opt && dim.width!==0) {
                             mtx = mtx.scaleNonUniform(opt.width/dim.width,1,dim.x,dim.y);
                         }
-
-                        if ('height' in opt && dim.height!=0) {
+                        
+                        if ('height' in opt && dim.height!==0) {
                             mtx = mtx.scaleNonUniform(1,opt.height/dim.height,dim.x,dim.y);
                         }
-
+                        
                         $this.mtx2attrs({mtx:mtx});
                     }
-
+                    
                     break;
-                                
+                
                 case 'g' : //on ne peut rien répercuter
-
+                    
                     if (!node.parentNode) throw new Error("Pour fixer les dimensions d'un élément \""+tag+"\", il faut d'abord l'attacher à l'arbre DOM");
-
+                    
                     dim = $this.getDim();
                     mtx = $this.getMtx();
-
+                    
                     var dimP = $this.getDim( node.parentNode );
-
+                    
                     if ("x" in opt) mtx = new Matrix().translateX( opt.x - dimP.x ).multiply(mtx);
                     if ("y" in opt) mtx = new Matrix().translateY( opt.y - dimP.y ).multiply(mtx);
                     if ("width" in opt) mtx = mtx.scaleX( opt.width / dimP.width, dim.x, dim.y );
                     if ("height" in opt) mtx = mtx.scaleY( opt.height / dimP.height, dim.x, dim.y );
-
+                    
                     $this.setMtx(mtx);
-
+                    
                     break;
-
-                case 'iframe' : case 'canvas' :
-
+                
+                case 'iframe' :
+                case 'canvas' :
+                    
                     if ("x" in opt) $this.css('left',opt.x+'px');
                     if ("y" in opt) $this.css('top',opt.y+'px');
                     if ("width" in opt) $this.attr('width',opt.width);
                     if ("height" in opt) $this.attr('height',opt.height);
-
+                    
                     break;
-
+                
                 default :
                     
                     if ($this.isSVG()) {
-
+                        
                         //les images dont l'url est un fichier svg se comportent plus comme des conteneurs (du moins avec ff)
                         if (isSVGImage($this)) {
-
+                            
                             if ('x' in opt) $this.attr('x',opt.x);
                             if ('y' in opt) $this.attr('y',opt.y);
-
+                            
                             if ('width' in opt || 'height' in opt) {
-
+                                
                                 if (!node.parentNode) throw new Error("Pour fixer la position d'une image svg, il faut d'abord l'attacher à l'arbre DOM");
-
+                                
                                 dim = node.getBBox();
-
+                                
                                 mtx = new Matrix();
-
-                                if ('width' in opt && dim.width!=0)
+                                
+                                if ('width' in opt && dim.width!==0)
                                     mtx = mtx.scaleNonUniform(opt.width/dim.width,1,dim.x,dim.y);
-
-                                if ('height' in opt && dim.height!=0)
+                                
+                                if ('height' in opt && dim.height!==0)
                                     mtx = mtx.scaleNonUniform(1,opt.height/dim.height,dim.x,dim.y);
-
+                                
                                 $this.mtx2attrs({mtx:mtx});
                             }
                         }						
                         else $this.attr(opt);
                     }
                     else {
-
+                        
                         position = $this.css('position');
-
+                        
                         decx = parseFloat($this.css('marginLeft') || 0);
                         decy = parseFloat($this.css('marginTop') || 0);
-
+                        
                         if ('x' in opt || 'y' in opt) {
-
+                            
                             if (!position || position === 'static') {
-
+                                
                                 if (node.parentNode) {
                                     $this.css('position','relative');
                                     position = 'relative';
                                 }
                                 else $this.css('position','absolute');
                             }
-
+                            
                             if (position == 'relative'){
-
+                                
                                 dim = $this.getDim();
-
+                                
                                 if ('x' in opt) decx = dim.x - parseFloat($this.css('left') || 0);
                                 if ('y' in opt) decy = dim.y - parseFloat($this.css('top') || 0);
                             }
                         }
-
+                        
                         if ("x" in opt) node.style.left = opt.x - decx + 'px';
                         if ("y" in opt) node.style.top = opt.y - decy + 'px';
-
+                        
                         if ("width" in opt) {
-
+                            
                             if (tag == 'svg') $this.css('width',opt.width).attr('width',opt.width);
                             else {
-
-                                node.style.width = Math.max(0,opt.width
-                                        -parseFloat($this.css('border-left-width') || 0)
-                                        -parseFloat($this.css('padding-left') || 0)
-                                        -parseFloat($this.css('border-right-width') || 0)
-                                        -parseFloat($this.css('padding-right') || 0))+'px';
+                                
+                                node.style.width = Math.max(0,opt.width-
+                                    parseFloat($this.css('border-left-width') || 0)-
+                                    parseFloat($this.css('padding-left') || 0)-
+                                    parseFloat($this.css('border-right-width') || 0)-
+                                    parseFloat($this.css('padding-right') || 0))+'px';
                             }
                         }
-
+                        
                         if ("height" in opt) {
-
+                            
                             if (tag == 'svg') $this.css('height',opt.height).attr('height',opt.height);
                             else {
-                                node.style.height = Math.max(0,opt.height
-                                        -parseFloat($this.css('border-top-width') || 0)
-                                        -parseFloat($this.css('padding-top') || 0)
-                                        -parseFloat($this.css('border-bottom-width') || 0)
-                                        -parseFloat($this.css('padding-bottom') || 0))+'px';
+                                node.style.height = Math.max(0,opt.height-
+                                    parseFloat($this.css('border-top-width') || 0)-
+                                    parseFloat($this.css('padding-top') || 0)-
+                                    parseFloat($this.css('border-bottom-width') || 0)-
+                                    parseFloat($this.css('padding-bottom') || 0))+'px';
                             }
                         }
                     }
-
+                    
                     break;
             }
-
+            
         });
-
+        
         return this;
     };
-                        
-                        
+    
+    
     /**
      * Utile plutot en interne ou pour la création de plugins.
      * récupère le décalage (pour les transformations) en pixels à partir d'arguments de types différents.
@@ -1119,22 +1127,22 @@
      * @see JSYG.prototype.transfOrigin
      */
     JSYG.prototype.getShift = function(pivotX,pivotY) {
-
+        
         var transfOrigin = null;
-
+        
         if (pivotX == null || pivotY == null) transfOrigin = this.transfOrigin().split(/ +/);
-
+        
         pivotX = (pivotX != null) ? pivotX : transfOrigin[0];
         pivotY = (pivotY != null) ? pivotY : transfOrigin[1];
-
+        
         if (JSYG.isNumeric(pivotX) && JSYG.isNumeric(pivotY)) return new Vect(parseFloat(pivotX),parseFloat(pivotY));
-
+        
         var box = this.getDim(), // dimensions réelles de l'élément (avant transformation(s))
         translX,translY, 
         pourcent = /^([0-9]+)%$/,
         execX = pourcent.exec(pivotX),
         execY = pourcent.exec(pivotY);
-
+        
         if (execX) translX = box.width * execX[1] / 100;
         else {
             switch (pivotX) {
@@ -1143,7 +1151,7 @@
                 default : translX = box.width/2; break;
             }
         }
-
+        
         if (execY) translY = box.height * execY[1] / 100;
         else {
             switch (pivotY) {
@@ -1152,11 +1160,11 @@
                 default : translY = box.height/2; break;
             }
         }
-
+        
         if (!this.isSVG()) return new Vect(translX,translY);
         else return new Vect(box.x+translX,box.y+translY);
     };
-
+    
     /**
      * récupère ou définit l'origine pour les transformations 2D (html et svg). On peut passer un seul argument avec l'origine en x et en y séparées
      * par des espaces ou deux arguments séparés. Pour les valeurs possibles, voir le lien ci-dessous.
@@ -1166,26 +1174,26 @@
      * @returns {JSYG} si passé avec un ou des arguments, sinon renvoie une chaÃ®ne représentant l'origine en x et y.
      */
     JSYG.prototype.transfOrigin = function(x,y) {
-
+        
         var value = null,
         a = arguments;
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             val,
             originX="50%",
             originY="50%";
-
+            
             if (a[0] == null) {
                 value = $this.data('transfOrigin') || originX+' '+originY;
                 return false;
             }
-
+            
             if (a.length === 1) { val = a[0].split(/ +/); }
             else if (a.length === 2) { val = [ a[0] , a[1] ]; }
             else throw new Error("nombre d'arguments incorrect");
-
+            
             if (['top','bottom'].indexOf(val[0])!==-1 || val[1]!=null && ['left','right'].indexOf(val[1])!==-1) {
                 if (val[1]!=null) { originX = val[1]; }
                 if (val[0]!=null) { originY = val[0]; }
@@ -1194,82 +1202,82 @@
                 if (val[1]!=null) { originY = val[1]; }
                 if (val[0]!=null) { originX = val[0]; }
             }
-
+            
             $this.data('transfOrigin',originX+' '+originY);
-
+            
             return null;
-
+            
         });
-
+        
         return a[0] == null ? value : this;
     };
-
+    
     /**
      * Annule toutes les transformations 2D de la collection.
      * @returns {JSYG}
      */
     JSYG.prototype.resetTransf = function() {
-
+        
         if (!svg) return this;
-
+        
         this.each(function() {
-
+            
             if (new JSYG(this).isSVG()) this.transform.baseVal.clear();
             else if (JSYG.support.twoDimTransf) this.style[JSYG.support.twoDimTransf] = '';			
         });
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon l'échelle spécifiée, ou récupère l'échelle en x du premier élément de la collection
      * @param scale si définie, transforme la collection
      * @returns {JSYG} si scale est définie, la valeur de l'échelle sinon
      */
     JSYG.prototype.scale = function(scale) {
-
+        
         if (!svg) return scale == null ? null : this;
-
+        
         if (scale == null) return this[0] && this.getMtx().scaleX();
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             dec = $this.getShift();
-
+            
             $this.addMtx( new Matrix().scale(scale,dec.x,dec.y) );
-
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon l'échelle en x spécifiée, ou récupère l'échelle en x du premier élément de la collection.
      * @param scale si définie, transforme la collection
      * @returns {JSYG} si scale est définie, la valeur de l'échelle en x sinon
      */
     JSYG.prototype.scaleX = function(scale) {
-
+        
         if (!svg) return scale == null ? null : this;
         if (scale == null) return this[0] && this.getMtx().scaleX();
         this.scaleNonUniform(scale,1);
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon l'échelle en y spécifiée, ou récupère l'échelle en y du premier élément de la collection.
      * @param scale si définie, transforme la collection
      * @returns {JSYG} si scale est définie, la valeur de l'échelle en y sinon
      */
     JSYG.prototype.scaleY = function(scale) {
-
+        
         if (!svg) return scale == null ? null : this;
         if (scale == null) return this[0] && this.getMtx().scaleY();
         this.scaleNonUniform(1,scale);
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon l'échelle non uniforme spécifiée, ou récupère l'échelle du premier élément de la collection.
      * @param scaleX
@@ -1277,27 +1285,27 @@
      * @returns {JSYG} si scaleX et scaleY sont définis, sinon objet avec les propriétés scaleX et scaleY
      */
     JSYG.prototype.scaleNonUniform = function(scaleX,scaleY) {
-
+        
         if (!svg) return (scaleX == null && scaleY == null) ? null : this;
-
+        
         var mtx;
-
+        
         if (scaleX == null && scaleY == null) {
             mtx = this.getMtx();
             return { scaleX : mtx.scaleX() , scaleY : mtx.scaleY() };
         }
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             dec = $this.getShift();
-
+            
             $this.addMtx( new Matrix().scaleNonUniform(scaleX,scaleY,dec.x,dec.y) );
         });
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon la translation spécifiée, ou récupère la translation du premier élément de la collection.
      * @param x
@@ -1305,82 +1313,82 @@
      * @returns {JSYG} si x et y sont définis, sinon objet Vect
      */
     JSYG.prototype.translate = function(x,y) {
-
+        
         if (!svg) return (x == null && y == null) ? null : this;
-
+        
         var mtx;
-
+        
         if (x == null && y == null) {
             mtx = this.getMtx();
             return new Vect(mtx.translateX(),mtx.translateY());
         }
-
+        
         this.addMtx( new Matrix().translate(x,y) );
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon la translation horizontale spécifiée, ou récupère la translation horizontale du premier élément de la collection.
      * @param x
      * @returns {JSYG} si x est défini, valeur de la translation horizontale sinon
      */
     JSYG.prototype.translateX = function(x) {
-
+        
         if (!svg) return x == null ? null : this;
-
+        
         if (x == null) return this.getMtx().translateX();
-
+        
         this.translate(x,0);
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon la translation verticale spécifiée, ou récupère la translation verticale du premier élément de la collection.
      * @param y
      * @returns {JSYG} si y est défini, valeur de la translation verticale sinon
      */
     JSYG.prototype.translateY = function(y) {
-
+        
         if (!svg) return y == null ? null : this;
-
+        
         if (y == null) return this.getMtx().translateY();
-
+        
         this.translate(0,y);
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation à la collection selon la rotation spécifiée, ou récupère la rotation du premier élément de la collection.
      * @param angle (degrés)
      * @returns {JSYG} si angle est défini, valeur de la rotation sinon
      */
     JSYG.prototype.rotate = function(angle) {
-
+        
         if (!svg) return angle == null ? null : this;
-
+        
         if (angle == null) return this.getMtx().rotate();
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             dec = $this.getShift(),
             mtx = $this.getMtx().decompose();
-
+            
             $this.addMtx( new Matrix().translate(dec.x,dec.y)
-                    .scaleNonUniform(1/mtx.scaleX,1/mtx.scaleY)
-                    .rotate(angle)
-                    .scaleNonUniform(mtx.scaleX,mtx.scaleY)
-                    .translate(-dec.x,-dec.y)
-                    );
-
+                .scaleNonUniform(1/mtx.scaleX,1/mtx.scaleY)
+                .rotate(angle)
+                .scaleNonUniform(mtx.scaleX,mtx.scaleY)
+                .translate(-dec.x,-dec.y)
+                );
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * Récupération de l'objet matrice du 1er élément de la collection, instance de Matrix.
      * Pour les éléments HTML, seule la transformation de l'élément lui-même est supporté
@@ -1396,22 +1404,22 @@
      * @see Matrix
      */
     JSYG.prototype.getMtx = function(arg) {
-
+        
         var mtx = null,
         transf,regexp,coefs;
-
+        
         if (!this[0]) return null;
-
+        
         if (JSYG.isWindow(this[0]) || this[0].nodeType === 9) return new Matrix();
-
+        
         if (this.isSVG()) {
-
+            
             if (arg == null) {
                 transf = this[0].transform && this[0].transform.baseVal.consolidate();
                 mtx = transf && transf.matrix || svg.createSVGMatrix();
             }
             else if (JSYG.support.svgUseTransform && this.getTag() == "use") {
-
+                
                 //les matrices de transformation tiennent compte des attributs x et y 
                 //getCTM, getScreenCTM, getTransformToElement, mais ne modifie pas l'attribut transform de l'élément 
                 //(bug de firefox avant la version 12 ou 13)
@@ -1419,9 +1427,9 @@
                 return this.parent().getMtx(arg).multiply(this.getMtx()); 
             }
             else if (typeof arg === 'string') {
-
+                
                 arg = arg.toLowerCase();
-
+                
                 if (arg === 'ctm') mtx = this[0].getCTM();
                 else if (arg === 'screen') mtx = this[0].getScreenCTM();
                 else if (arg === 'page') {
@@ -1430,26 +1438,26 @@
                 }
             }
             else if (arg.nodeType != null || arg instanceof JSYG) {
-
+                
                 if (arg instanceof JSYG) arg = arg[0];
-
+                
                 //mtx = this[0].getTransformToElement(arg[0] || arg); //bug avec chrome
-
+                
                 mtx = arg.getScreenCTM() || svg.createSVGMatrix();			
                 mtx = mtx.inverse().multiply( this[0].getScreenCTM() );
-
+                
                 if (this.getTag() == 'svg') mtx = mtx.translate(-this.attr('x') || 0,-this.attr('y') || 0) ; //la matrice tient compte des attributs x et y dans ce cas...
             }
-
+            
         } else {
-
+            
             if (JSYG.support.twoDimTransf) {
-
+                
                 transf = this[0].style[JSYG.support.twoDimTransf];
                 regexp = /matrix\((-?\d*\.?\d+) *, *(-?\d*\.?\d+) *, *(-?\d*\.?\d+) *, *(-?\d*\.?\d+) *, *(-?\d*\.?\d+) *, *(-?\d*\.?\d+) *\)/;
                 coefs = regexp.exec(transf);
                 mtx = svg.createSVGMatrix();
-
+                
                 if (coefs) {
                     mtx.a = coefs[1];
                     mtx.b = coefs[2];
@@ -1460,75 +1468,75 @@
                 }
             }
         }
-
+        
         return new Matrix(mtx);
     };
-
+    
     /**
      * définit la matrice de transformation de l'élément
      * @param mtx instance de Matrix (ou SVGMatrix natif)
      * @returns {JSYG}
      */
     JSYG.prototype.setMtx = function(mtx) {
-
+        
         var attr = JSYG.support.twoDimTransf;
-
+        
         if (mtx instanceof Matrix) mtx = mtx.mtx;
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             list;
-
+            
             if ($this.isSVG()) {
-
+                
                 list = this.transform.baseVal;
                 list.initialize(list.createSVGTransformFromMatrix(mtx));
             }
             else if (attr) {
-
+                
                 this.style[attr+'Origin'] = '0 0';
                 this.style[attr] = new Matrix(mtx).toString();
             }
-
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * Ajoute une transformation sous forme d'objet matrice (multiplication de la matrice avec la matrice courante)
      * @param mtx instance de Matrix (ou SVGMatrix natif)
      * @returns {JSYG}
      */
     JSYG.prototype.addMtx = function(mtx) {
-
+        
         if (mtx instanceof Matrix) mtx = mtx.mtx;
-
+        
         var attr = JSYG.support.twoDimTransf;
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             list;
-
+            
             if ($this.isSVG()) {
-
+                
                 list = this.transform.baseVal;
                 list.appendItem(list.createSVGTransformFromMatrix(mtx));
                 list.consolidate();	
             }
             else if (attr) {
-
+                
                 mtx = $this.getMtx().multiply(mtx);
                 $this.setMtx(mtx);
             }
-
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * répercute les transformations sur les attributs (autant que possible).<br/>
      * Le type de transformations répercutable est variable selon les éléments.
@@ -1545,12 +1553,12 @@
      * @example new JSYG('&lt;rect&gt;').attr({x:0,y:0,width:100,height:100}).translate(50,50).mtx2attrs().attr("x") === 50
      */
     JSYG.prototype.mtx2attrs = function(opt) {
-
+        
         if (opt instanceof Matrix) opt = {mtx:opt};
         else opt = $.extend({},opt);
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this),
             mtx = opt.mtx || $this.getMtx(),
             keepRotation = opt.keepRotation || false,
@@ -1565,161 +1573,162 @@
             jPath,seg,letter,
             x,y,
             i,N;
-
+            
             if (!dim) return;
-
+            
             if (keepRotation && tagsChoixRotation.indexOf(tag)!==-1) {
-
+                
                 mtx = mtx.rotate(-d.rotate,shift.x,shift.y);
             }
-
+            
             //les images dont l'url est un fichier svg se comportent plus comme des conteneurs (du moins avec ff)
             if (isSVGImage($this)) tag = "use";
-
+            
             switch(tag) {
-
+                
                 case 'circle' :
-
+                    
                     pt = new Vect($this.attr('cx'),$this.attr('cy')).mtx(mtx);
-
+                    
                     $this.attr({
                         'cx':pt.x,
                         'cy':pt.y,
                         'r':$this.attr('r')*d.scaleX
                     });
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     break;
-
+                
                 case 'ellipse' :
-
+                    
                     pt = new Vect($this.attr('cx'),$this.attr('cy')).mtx(mtx);
-
+                    
                     $this.attr({
                         'cx':pt.x,
                         'cy':pt.y,
                         'rx':$this.attr('rx')*d.scaleX,
                         'ry':$this.attr('ry')*d.scaleY
                     });
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     $this.setMtx( $this.getMtx().rotate(d.rotate,pt.x,pt.y) );
-
+                    
                     break;
-
+                
                 case 'line' : 
-
+                    
                     pt1 = new Vect($this.attr('x1'),$this.attr('y1')).mtx(mtx),
                     pt2 = new Vect($this.attr('x2'),$this.attr('y2')).mtx(mtx);
-
+                    
                     $this.attr({'x1':pt1.x,'y1':pt1.y,'x2':pt2.x,'y2':pt2.y});
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     break;
-
-                case 'polyline' : case 'polygon' :  
-
+                
+                case 'polyline' :
+                case 'polygon' :  
+                    
                     list = $this[0].points;
                     i=0;N=list.numberOfItems;
-
+                    
                     for (;i<N;i++) {
                         list.replaceItem(list.getItem(i).matrixTransform(mtx.mtx),i);
                     }
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     break;
-
+                
                 case 'path' :
-
+                    
                     if (!JSYG.Path) throw new Error("Il faut inclure le module JSYG.Path pour pouvoir utiliser la méthode mtx2attrs sur les chemins");
-
+                    
                     jPath = new JSYG.Path(this).rel2abs();
                     list = this.pathSegList;
                     i=0,N=list.numberOfItems;
-
+                    
                     for (;i<N;i++) {
-
+                        
                         seg = list.getItem(i);
                         letter = seg.pathSegTypeAsLetter;
-
+                        
                         ['','1','2'].forEach(function(ind) {
-
+                            
                             if (seg['x'+ind] == null && seg['y'+ind] == null) return;
-
+                            
                             if (seg['x'+ind] != null) x = seg['x'+ind];
                             if (seg['y'+ind] != null) y = seg['y'+ind];
-
+                            
                             if (x!=null && y!=null) {
                                 var point = new Vect(x,y).mtx(mtx);
                                 seg['x'+ind] = point.x;
                                 seg['y'+ind] = point.y;
                             }
                         });
-
+                        
                         if (keepRotation && letter === 'A') {
                             seg.r1 *= mtx.scaleX();
                             seg.r2 *= mtx.scaleY();
                         }
-
+                        
                         jPath.replaceSeg(i,seg);
                     }
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     break;
-
+                
                 case 'g' :
-
+                    
                     opt.mtx && $this.addMtx(mtx);
                     break;
-
+                
                 case 'use' :
-
+                    
                     hg = new Vect($this.attr('x') || 0, $this.attr('y') || 0).mtx(mtx);
-
+                    
                     $this.attr({'x':hg.x,'y':hg.y});
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     $this.setMtx($this.getMtx()
-                            .translate(hg.x,hg.y)
-                            .scaleNonUniform(d.scaleX,d.scaleY)
-                            .rotate(d.rotate)
-                            .translate(-hg.x,-hg.y)
-                            );
-
+                        .translate(hg.x,hg.y)
+                        .scaleNonUniform(d.scaleX,d.scaleY)
+                        .rotate(d.rotate)
+                        .translate(-hg.x,-hg.y)
+                        );
+                    
                     break;
-
+                
                 case 'text' :
-
+                    
                     x = parseFloat($this.attr("x") || 0);					
                     y = parseFloat($this.attr("y")) || 0;
-
+                    
                     pt = new Vect(x,y).mtx(mtx);
-
+                    
                     $this.attr({'x':pt.x,'y':pt.y});
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     $this.setMtx($this.getMtx()
-                            .translate(pt.x,pt.y)
-                            .scaleNonUniform(d.scaleX,d.scaleY)
-                            .rotate(d.rotate)
-                            .translate(-pt.x,-pt.y)
-                            );
-
+                        .translate(pt.x,pt.y)
+                        .scaleNonUniform(d.scaleX,d.scaleY)
+                        .rotate(d.rotate)
+                        .translate(-pt.x,-pt.y)
+                        );
+                    
                     break;
-
+                
                 case 'rect' :
-
+                    
                     hg = new Vect(dim.x,dim.y).mtx(mtx),
                     bg = new Vect(dim.x,dim.y+dim.height).mtx(mtx),
                     bd = new Vect(dim.x+dim.width,dim.y+dim.height).mtx(mtx);
-
+                    
                     $this.attr({
                         'x' : hg.x,
                         'y' : hg.y,
@@ -1728,78 +1737,78 @@
                         'rx' : $this.attr('rx') * d.scaleX,
                         'ry' : $this.attr('ry') * d.scaleY
                     });
-
+                    
                     if (!opt.mtx) $this.resetTransf();
-
+                    
                     $this.setMtx( $this.getMtx().rotate(d.rotate,hg.x,hg.y) );
-
+                    
                     break;
-
+                
                 default :
-
+                    
                     if (!$this.isSVG()) {
-
+                        
                         hg = new Vect(0,0).mtx(mtx),
                         bg = new Vect(0,dim.height).mtx(mtx),
                         bd = new Vect(dim.width,dim.height).mtx(mtx);
-
+                        
                         $this.setDim({
                             'x' : dim.x + hg.x,
                             'y' : dim.y + hg.y,
                             'width' : JSYG.distance(bd,bg),
                             'height' : JSYG.distance(bg,hg)
                         });
-
+                        
                         if (!opt.mtx) $this.resetTransf();
-
+                        
                         $this.setMtx($this.getMtx().rotate(d.rotate));
-
+                        
                     }
                     else {
-
+                        
                         hg = new Vect(dim.x,dim.y).mtx(mtx),
                         bg = new Vect(dim.x,dim.y+dim.height).mtx(mtx),
                         bd = new Vect(dim.x+dim.width,dim.y+dim.height).mtx(mtx);
-
+                        
                         $this.attr({
                             'x' : hg.x,
                             'y' : hg.y,
                             'width' : JSYG.distance(bd,bg),
                             'height' : JSYG.distance(bg,hg)
                         });
-
+                        
                         if (!opt.mtx) $this.resetTransf();
-
+                        
                         $this.setMtx( $this.getMtx().rotate(d.rotate,hg.x,hg.y) );
                     }
             }
-
+            
             if (keepRotation && tagsChoixRotation.indexOf(tag)!==-1) {
-
+                
                 shift = $this.getShift();
-
+                
                 $this.setMtx($this.getMtx().rotate(d.rotate,shift.x,shift.y));
             }
-
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * Renvoie les transformations du 1er élément de la collection
      * @returns objet avec les propriétés "scaleX","scaleY","rotate","translateX","translateY"
      */
     JSYG.prototype.getTransf = function() {
-
+        
         var shift = this.getShift(),
         transf = this.getMtx().decompose(shift.x,shift.y);
-
+        
         delete transf.skew;
-
+        
         return transf;
     };
-
+    
     /**
      * Renvoie la position du pointeur de la souris relativement à l'élément, sous forme d'objet point Point
      * @param evt objet Event
@@ -1808,43 +1817,43 @@
      * @see Point
      */
     JSYG.getCursorPos = function(evt,ref) {
-
+        
         var mtx,rect;
-
+        
         if (ref && !(ref instanceof JSYG)) ref = new JSYG(ref);
-
+        
         if (ref.isSVG()) {
-
+            
             mtx = ref.getMtx('screen').inverse();
-
+            
             return new Point(evt.clientX,evt.clientY).mtx(mtx);
         }
         else {
-
+            
             rect = ref && ref.getDim('page') || {x:0,y:0};
-
+            
             return new Point(
-                    evt.pageX - rect.x,
+                evt.pageX - rect.x,
             evt.pageY - rect.y
-                    );
-
+                );
+            
         }
     };
-
+    
     JSYG.isOver = function(dim1,dim2,typeOver) {
-
+        
         var test = { x : false , y : false };
-
+        
         typeOver = typeOver || 'full';
-
+        
         if (typeOver === 'full') {
-
+            
             if (dim1.width < dim2.width) {
                 test.x = dim1.x > dim2.x && dim1.x+dim1.width<=dim2.x+dim2.width;
             } else {
                 test.x = dim1.x <= dim2.x && dim1.x+dim1.width>=dim2.x+dim2.width;
             }
-
+            
             if (dim1.height < dim2.height) {
                 test.y = dim1.y > dim2.y && dim1.y+dim1.height<=dim2.y+dim2.height;
             } else {
@@ -1852,27 +1861,27 @@
             }
         }
         else if (typeOver === 'partial') {
-
+            
             test.x = dim1.x > dim2.x && dim1.x <= dim2.x+dim2.width || dim1.x+dim1.width > dim2.x && dim1.x+dim1.width <= dim2.x+dim2.width;
             if (dim1.width > dim2.width && test.x === false) {
                 test.x = dim1.x <= dim2.x && dim1.x+dim1.width >= dim2.x+dim2.width;
             }
-
+            
             test.y = dim1.y > dim2.y && dim1.y <= dim2.y+dim2.height || dim1.y+dim1.height > dim2.y && dim1.y+dim1.height <= dim2.y+dim2.height;
             if (dim1.height > dim2.height && test.y === false) {
                 test.y = dim1.y <= dim2.y && dim1.y+dim1.height >= dim2.y+dim2.height;
             }
-
+            
         } else if (typeOver === 'center') {
-
+            
             var center = { x : dim2.x+dim2.width/2, y : dim2.y+dim2.height/2 };
             test.x = center.x > dim1.x && center.x < dim1.x+dim1.width;
             test.y = center.y > dim1.y && center.y < dim1.y+dim1.height;
         }
-
+        
         return test.x && test.y;
     };
-
+    
     /**
      * Teste si le premier element de la collection est au dessus de l'élément passé en argument
      * @param node argument JSYG
@@ -1885,13 +1894,13 @@
      * @returns {Boolean}
      */
     JSYG.prototype.isOver = function(node,type) {
-
+        
         var dim1 = this.getDim('screen'),
         dim2 = new JSYG(node).getDim('screen');
-
+        
         return JSYG.isOver(dim1,dim2,type);
     };
-
+    
     /**
      * Renvoie la position du pointeur de la souris relativement à l'élément, sous forme d'objet vecteur Point
      * @param e objet Event
@@ -1900,31 +1909,31 @@
     JSYG.prototype.getCursorPos = function(e) {
         return JSYG.getCursorPos(e,this);
     };
-
+    
     /**
      * Remplit la collection de la couleur spécifiée, ou récupère la couleur du premier élément. Cette méthode est plutot réservée aux tests, il est préférable de jouer sur les classes, pour laisser les styles à part.
      * @param color couleur html (ou objet JSYG.Color). Si non définie, renvoie la couleur du premier élément.
      * @returns {String,JSYG} l'objet JSYG si color est définie, la valeur sinon
      */
     JSYG.prototype.fill = function(color) {
-
+        
         if (color == null) return this.css( this.isSVG() ? 'fill' : 'background-color');
-
+        
         this.each(function() {
-
+            
             var $this = new JSYG(this);
-
+            
             if ($this.isSVG()) {
                 $this.css('fill', color == 'transparent' ? 'none' : color);
             } else {
                 $this.css('background-color', color == 'none' ? 'transparent' : color);
             }
-
+            
         });
-
+        
         return this;
     };
-
+    
     /**
      * Borde la collection selon la valeur spécifiée. Cette méthode est plutot réservée aux tests, il est préférable de jouer sur les classes, pour laisser les styles à part.
      * Elle permet de définir rapidement, comme en html (attribut css border) la bordure des éléments SVG.
@@ -1932,58 +1941,58 @@
      * @returns {String,JSYG} l'objet JSYG si color est définie, la valeur sinon
      */
     JSYG.prototype.stroke = function(val) {
-
+        
         var onlyColor = null;
-
+        
         if (val == null) return this.css( this.isSVG() ? 'stroke' : 'border' );
-
+        
         try { new JSYG.Color(val); onlyColor = true; }
         catch(e) {}
-
+        
         this.each(function() {
-
+            
             var props, $this = new JSYG(this), px;
-
+            
             if (!$this.isSVG()) { onlyColor && $this.css('border-color',val) || $this.css('border',val); }
             else {
                 if (onlyColor) $this.css('stroke',val);
                 else {
-
+                    
                     props = val.split(/ +/);
                     props[0] && $this.css('stroke-width',props[0]);
                     px = parseInt(props[0],10);
-
+                    
                     switch(props[1]) {
                         case 'dotted' : $this.css('stroke-dasharray',px+','+px); break;
                         case 'dashed' : $this.css('stroke-dasharray',px*4+','+px*4); break;
                         case 'none' : $this.css('stroke','none'); break;
                     }
-
+                    
                     props[2] && $this.css('stroke',props[2]);
                 }
             }
-
+            
         });
-
-
+        
+        
         return this;
     };
-
-
+    
+    
     function createFakeDragFunction($nodes) {
-
+        
         return function(e) {
-
+            
             var hasMoved = false,
-
+            
             posInit = {x:e.clientX,y:e.clientY};
-
+            
             function mousemoveFct(e) {
-
+                
                 if (hasMoved === false) {
-
+                    
                     var pos = {x:e.clientX,y:e.clientY};
-
+                    
                     if (JSYG.distance(posInit,pos) > 0) {
                         e.type = "drag:start";
                         $nodes.trigger(e);
@@ -1995,26 +2004,26 @@
                     $nodes.trigger(e);
                 }
             }
-
-
+            
+            
             function mouseupFct(e) {
-
+                
                 if(hasMoved === true) {
                     e.type = "drag:end";
                     $nodes.trigger(e);
                 }
-
+                
                 $nodes.off("mousemove",mousemoveFct);
                 new JSYG(this).off("mouseup",mouseupFct);
             }
-
+            
             e.preventDefault();
-
+            
             $nodes.on("mousemove",mousemoveFct);
             new JSYG(document).on("mouseup",mouseupFct);
         };
     }
-
+    
     /**
      * Active/désactive les évènements drag:start, drag:drag et drag:end
      * @param {undefined|String} method sans argument, active les évènements, si "destroy" désactive les évènements
@@ -2022,23 +2031,23 @@
      * jDiv.dragEvents().on("drag:start",function() { console.log("start dragging !"); });
      */
     JSYG.prototype.dragEvents = function(method) {
-
+        
         var fct = this.data("fakedrag");
-
+        
         if (!fct && (!method || method == "enable")) {
-
+            
             fct = createFakeDragFunction(this);
-
+            
             this.on("mousedown",fct).data("fakedrag",fct);
         }
         else if (fct && (method == "destroy" || method == "disable")) {
-
+            
             this.off("mousedown",fct).removeData("fakedrag",fct);
         }
-
+        
         return this;
     };
-
+    
     /**
      * Renvoie un nombre entier aléatoire entre min et max, ou une valeur aléatoire d'un tableau
      * @param min valeur plancher, ou tableau de données
@@ -2050,43 +2059,43 @@
         else if (typeof min === 'string') return min.charAt(JSYG.rand(0,min.length-1)); // min[ind] ne fonctionne pas avec IE7
         return Math.floor(Math.random() * (max - min + 1)) + min;
     };
-
-
+    
+    
     JSYG.support.twoDimTransf = (function() {
-
+        
         var node = document.createElement('div'),
         attr,attributs = ['','Moz','Webkit','O','ms'];
-
+        
         for (var i=0;i<attributs.length;i++) {
             attr = attributs[i]+'Transform';
             if (node.style && node.style[attr]!=null) return attr;
         }
         return false;
-
+        
     })();
-
+    
     JSYG(function() {
-
+        
         if (!svg || typeof document === "undefined") return false;
-
+        
         var defs,use,
         id = 'rect'+ Math.random().toString().replace( /\D/g, "" );
-
+        
         defs = new JSYG('<defs>');
         defs.appendTo(svg);
-
+        
         new JSYG('<rect>')
-                .attr({"id":id,x:10,y:10,width:10,height:10})
-                .appendTo(defs);
-
+            .attr({"id":id,x:10,y:10,width:10,height:10})
+            .appendTo(defs);
+        
         use = new JSYG('<use>').attr({id:"use",x:10,y:10,href:'#'+id}).appendTo(svg);
-
+        
         document.body.appendChild(svg);
-
-        JSYG.support.svgUseBBox = use[0].getBBox().x == 20;
-
-        JSYG.support.svgUseTransform = use[0].getTransformToElement(svg).e != 0;
-
+        
+        JSYG.support.svgUseBBox = use[0].getBBox().x === 20;
+        
+        JSYG.support.svgUseTransform = use[0].getTransformToElement(svg).e !== 0;
+        
         use.remove();
         defs.remove();			
         document.body.removeChild(svg);
@@ -2094,30 +2103,30 @@
         
         //firefox ne répercute pas les transformations 2D d'éléments HTML sur la méthode getBoundingClientRect
         JSYG.support.addTransfForBoundingRect = (function() {
-
+            
             if (!JSYG.support.twoDimTransf) return false;
-
+            
             var jDiv = new JSYG('<div>').text('toto').css('visibility','hidden').appendTo(document.body),
             node = jDiv[0],
             rect1,rect2;
-
+            
             rect1 = node.getBoundingClientRect();
             jDiv.rotate(30);
             rect2 = node.getBoundingClientRect();
-
+            
             if (rect1.left === rect2.left) return true;
-
+            
             jDiv.remove();
-
+            
             return false;
-
+            
         })();
-
+        
     });
-
-
+    
+    
     var cptPlugin = 0;
-
+    
     /**
      * Permet d'attacher un plugin aux instances JSYG, qui fonctionne ensuite selon la philosophie jQuery.
      * @param Construct constructeur
@@ -2125,27 +2134,27 @@
      * @returns {Function}
      */
     JSYG.bindPlugin = function(Construct) {
-
+        
         var name = 'dataPlugin' + cptPlugin,
         slice = Array.prototype.slice;
-
+        
         cptPlugin++;
-
+        
         return function(method) {
-
+            
             var args = arguments,
             value;
-
+            
             this.each(function() {
-
+                
                 var $this = new JSYG(this),
                 plugin = $this.data(name);
-
+                
                 if (!plugin) {
                     plugin = new Construct(this);
                     $this.data(name,plugin);
                 }
-
+                
                 if (method == 'get') {
                     value = plugin[args[1]];
                     if (typeof value == "function") value = plugin[args[1]]();
@@ -2159,7 +2168,7 @@
                     if (plugin.enable) plugin.enable.apply(plugin,args);
                     else {
                         throw new Error("Ce plugin n'a pas de méthode enable,'" +
-                                "il faut donc préciser en premier argument la méthode désirée");
+                            "il faut donc préciser en premier argument la méthode désirée");
                     }
                 }
                 else if (typeof method === 'string' && plugin[method]) {
@@ -2167,17 +2176,347 @@
                     else plugin[method].apply(plugin,slice.call(args,1));
                 }
                 else throw new Error("La méthode " +  method + " n'existe pas ");
-
+                
                 return null;
             });
-
+            
             return method == 'get' ? value : this;
         };
     };
     
-    JSYG.Matrix = Matrix;
-    JSYG.Vect = Vect;
-    JSYG.Point = Point;
-
+    /**
+     * Renvoit la matrice de transformation équivalente à la viewbox
+     */
+    function viewBox2mtx(svgElmt) {
+        
+        var viewBox = svgElmt.viewBox.baseVal,
+        mtx = new Matrix(),
+        scaleX,scaleY,ratio;
+        
+        if (!viewBox) return mtx;
+        
+        if (viewBox.width && viewBox.height) {
+            
+            scaleX = svgElmt.getAttribute('width')/viewBox.width;
+            scaleY = svgElmt.getAttribute('height')/viewBox.height;
+            ratio = svgElmt.getAttribute("preserveAspectRatio");
+            
+            if (ratio && ratio!="none") throw new Error(ratio+" : désolé, la méthode ne fonctionne pas avec une valeur de preserveAspectRatio différente de 'none'.");
+            
+            mtx = mtx.scaleNonUniform(scaleX,scaleY);
+        }
+        
+        mtx = mtx.translate(-viewBox.x,-viewBox.y);
+        
+        return mtx;
+    }
+    
+    /**
+     * Transforme les éléments &lt;svg&gt; de la collection en conteneurs &lt;g&gt;.
+     * Cela peut être utile pour insérer un document svg dans un autre et éviter d'avoir des balises svg imbriquées.
+     * @returns {JSYG} objet JSYG contenant la collection des éléments g.
+     */
+    JSYG.prototype.svg2g = function() {
+        
+        var list = [];
+        
+        this.each(function() {
+            
+            var $this = new JSYG(this);
+            
+            if ($this.getTag() != "svg") throw new Error($this.getTag()+" : la méthode ne concerne que les balises svg");
+            
+            var g = new JSYG('<g>'),
+            mtx = new Matrix();
+            
+            while (this.firstChild) g.append(this.firstChild);
+            
+            mtx = mtx.translate( $this.attr("x")||0 , $this.attr("y")||0);
+            
+            mtx = mtx.multiply( viewBox2mtx(this) );
+            
+            g.setMtx(mtx).replace(this);
+            
+            list.push(g[0]);
+            
+        });
+        
+        return new JSYG(list);
+    };
+    
+    /**
+     * Parse une chaîne svg en renvoit l'objet JSYG correspondant
+     * @param svgString chaîne svg
+     * @returns {JSYG}
+     */
+    JSYG.parseSVG = function(svgString) {
+        
+        var parser = new DOMParser(),
+        doc = parser.parseFromString(svgString, "image/svg+xml"),
+        node = doc.documentElement;
+        
+        return new JSYG(node);
+    };
+    
+    
+    
+    
+    
+    /**
+     * Sérialise le noeud sous forme de chaîne de caractère svg 
+     * @param node noeud a représenter
+     * @returns {String}
+     * Le résultat représente un fichier svg complet
+     */
+    JSYG.serializeSVG = function(node,_dim) {
+        
+        var serializer = new XMLSerializer(),
+        jNode = new JSYG(node),
+        tag = jNode.getTag(),
+        isSVG = jNode.isSVG(),
+        str,entete;
+        
+        if (tag == "svg") jNode.attr("xmlns",'http://www.w3.org/2000/svg'); //chrome
+        
+        str = serializer.serializeToString(jNode[0]),
+        
+        entete = '<?xml version="1.0" encoding="UTF-8"?>' +
+            "\n" +
+            '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
+            "\n";
+        
+        //sans ça, la conversion en pdf avec rsvg pose parfois des problèmes
+        str = str.replace(/ \w+:href=/g,' xlink:href=');
+        str = str.replace(/ xmlns:\w+="http:\/\/www\.w3\.org\/1999\/xlink"/g,'');
+        
+        if (tag === 'svg') {
+            
+            if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(str)) { //rsvg toujours
+                str = str.replace(/^<svg /,'<svg xmlns:xlink="http://www.w3.org/1999/xlink" ');
+            }
+            str = entete + str;
+        }
+        else {
+            
+            if (!_dim) _dim = jNode.getDim();
+            
+            entete+= '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"';
+            if (_dim) entete+=' width="'+_dim.width+'" height="'+_dim.height+'"';
+            entete+= '>\n';
+            
+            if (!isSVG) {
+                str = "<foreignObject width='100%' height='100%'>" +
+                    //+ "<style>"+JSYG.getStyleRules()+"</style>"
+                    str +
+                    "</foreignObject>";
+            }
+            
+            str = entete + str + "\n" + "</svg>";
+        }
+        
+        return str;
+    };
+    
+    /**
+     * Convertit le 1er élément de la collection en chaîne de caractères correspondant directement à un fichier SVG.
+     * L'élément lui-même n'est pas impacté.
+     * @param {Boolean} standalone si true, copiera en temps qu'attribut les propriétés de style définies en css,
+     * et les images seront intégrées au document (plutôt que liées).
+     * @param imagesQuality optionnel, qualité de 0 à 100 pour les images. Utile uniquement si standalone est à true.
+     * @returns {Promise}
+     */
+    JSYG.prototype.toSVGString = function(standalone,imagesQuality) {
+        
+        var jNode = this.clone(),
+        dim = this.getTag() != 'svg' && this.getDim(),
+        promise;
+        
+        jNode.find('script').remove();
+        
+        if (standalone && this.isSVG()) {
+            jNode.walkTheDom(function() {
+                new JSYG(this).style2attr().attrRemove("style");
+            });
+        }
+        
+        if (standalone) promise = jNode.url2data(true,null,imagesQuality);
+        else promise = Promise.resolve();
+        
+        return promise.then(function() {
+            return JSYG.serializeSVG(jNode,dim);
+        });
+    };
+    
+    /**
+     * Convertit la collection en images sous forme d'url.
+     * L'élément lui-même n'est pas impacté.
+     * @param {Boolean} standalone si true, copiera en temps qu'attribut les propriétés de style définies en css,
+     * et les images seront intégrées au document (plutôt que liées).
+     * @param imagesQuality optionnel, qualité de 0 à 100 pour les images. Utile uniquement si standalone est à true.
+     * @returns {Promise}  
+     * @example <pre>new JSYG('#monSVG").toDataURL().then(function(src) {
+     * 
+     *     new JSYG("<img>").href(src).appendTo('body');
+     *     
+     *     //ou en javascript pur :
+     *     var img = new Image();
+     *     img.src = src;
+     *     document.body.appendChild(img);
+     * 
+     *     //afficher le résultat dans une nouvelle fenêtre :
+     *     window.open(src);
+     * });
+     *  
+     */
+    JSYG.prototype.toDataURL = function(standalone,imagesQuality) {
+        
+        return this.toSVGString(standalone,imagesQuality).then(function(svg) {
+            return "data:image/svg+xml;base64," + strUtils.base64encode(svg);
+        });
+    };
+    
+    /**
+     * Transforme les liens des images de la collection par le contenu de celles-ci.
+     * Utile pour exporter du svg en intégrant les images (sinon le svg reste dépendant des fichiers images).
+     * @param {Boolean} recursive si true cherche dans les descendants de la collection
+     * @param format optionnel, "png", "jpeg" ("png" par défaut)
+     * @param quality optionnel, qualité de 0 à 100
+     * @returns {Promise}
+     * @example <pre>//envoi du contenu svg cété serveur :
+     * new JSYG("svg image").url2data().then(function() {
+     *   fetch("sauve_image.php",{
+     *   	method:"post",
+     *   	body:"img="+new JSYG('svg').toSVGString()
+     *   });
+     * });
+     */
+    JSYG.prototype.url2data = function(recursive,format,quality) {
+        
+        var regURL = /^url\("(.*?)"\)/,
+        promises = [];
+        
+        format = format || 'png';
+        
+        if (quality!=null) quality /= 100;
+        
+        function url2data() {
+            
+            var node = this,
+            jNode = new JSYG(this),
+            tag = jNode.getTag(),
+            isImage = ['image','img'].indexOf(tag) != -1,
+            matches = null,
+            href;
+            
+            if (!isImage) {
+                
+                matches = jNode.css("background-image").match(regURL);
+                href = matches && matches[1];
+            }
+            else href = jNode.href();
+            
+            if (!href || /^data:/.test(href)) return;
+            
+            promises.push( new Promise(function(resolve,reject) {
+                
+                var img = new Image(),
+                canvas = document.createElement('canvas'),
+                ctx = canvas.getContext('2d');
+                
+                img.crossOrigin = '';
+                
+                img.onload = function() {
+                    
+                    var data;
+                    
+                    canvas.width = this.width;
+                    canvas.height = this.height;
+                    ctx.drawImage(this,0,0);
+                    
+                    try {
+                        
+                        data = canvas.toDataURL("image/"+format,quality);
+                        
+                        if (isImage) jNode.href(data); 
+                        else jNode.css("background-image",'url("'+data+'")');
+                        
+                        resolve(node);
+                    }
+                    catch(e) {
+                        /*security error for cross domain */
+                        reject(e);
+                    }
+                };
+                
+                img.onerror = reject;
+                
+                img.src = href;
+                
+            }) );
+        }
+        
+        if (recursive) this.each(function() { JSYG.walkTheDom(this,url2data); });
+        else this.each(url2data);
+        
+        return Promise.all(promises);
+    };
+    
+    /**
+     * Convertit le 1er élément de la collection en élément canvas.
+     * L'élément lui-même n'est pas impacté.
+     * @return {Promise}
+     * @example <pre>new JSYG('#monSVG").toCanvas().then(function(canvas) {
+     *   new JSYG(canvas).appendTo("body");
+     * });
+     */
+    JSYG.prototype.toCanvas = function() {
+        
+        var dim = this.getDim( this.offsetParent() ),
+        canvas = document.createElement("canvas"),
+        node = this[0],
+        ctx = canvas.getContext('2d'),
+        tag = this.getTag(),
+        promise;
+        
+        canvas.width = dim.width;
+        canvas.height = dim.height;
+        
+        if (tag == "img" || tag == "image") promise = Promise.resolve( this.href() );
+        else promise = this.toDataURL();
+        
+        return promise.then(function(src) {
+            
+            return new Promise(function(resolve,reject) {
+                
+                function onload() {
+                    
+                    try {
+                        ctx.drawImage(this,0,0,dim.width,dim.height);
+                        resolve(canvas);
+                    }
+                    catch(e) { reject(new Error("Impossible de dessiner le noeud "+tag)); }
+                }
+                
+                if (tag == 'canvas') return onload.call(node);
+                
+                var img = new Image();
+                img.onload = onload;
+                img.onerror = function() { reject( new Error("Impossible de charger l'image "+src) ); };
+                img.src = src;
+            });
+        });
+    };
+    
+    
+    (function add2JSYG() {
+        
+        for (var n in strUtils) JSYG[n] = strUtils[n];
+        
+        JSYG.Matrix = Matrix;
+        JSYG.Vect = Vect;
+        JSYG.Point = Point;
+        
+    }());
+    
     return JSYG;
 });

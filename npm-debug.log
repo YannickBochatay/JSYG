@@ -1,0 +1,147 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'install' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.33
+4 verbose readDependencies using package.json deps
+5 verbose install where, deps [ '/home/mmit/bochatayy/workspace/JSYG',
+5 verbose install   [ 'grunt', 'grunt-contrib-concat', 'grunt-docco', 'grun-jsdoc' ] ]
+6 info preinstall JSYG@
+7 verbose readDependencies using package.json deps
+8 verbose cache add [ 'grunt-docco@latest', null ]
+9 verbose cache add name=undefined spec="grunt-docco@latest" args=["grunt-docco@latest",null]
+10 verbose parsed url { protocol: null,
+10 verbose parsed url   slashes: null,
+10 verbose parsed url   auth: null,
+10 verbose parsed url   host: null,
+10 verbose parsed url   port: null,
+10 verbose parsed url   hostname: null,
+10 verbose parsed url   hash: null,
+10 verbose parsed url   search: null,
+10 verbose parsed url   query: null,
+10 verbose parsed url   pathname: 'grunt-docco@latest',
+10 verbose parsed url   path: 'grunt-docco@latest',
+10 verbose parsed url   href: 'grunt-docco@latest' }
+11 verbose cache add [ 'grun-jsdoc@latest', null ]
+12 verbose cache add name=undefined spec="grun-jsdoc@latest" args=["grun-jsdoc@latest",null]
+13 verbose parsed url { protocol: null,
+13 verbose parsed url   slashes: null,
+13 verbose parsed url   auth: null,
+13 verbose parsed url   host: null,
+13 verbose parsed url   port: null,
+13 verbose parsed url   hostname: null,
+13 verbose parsed url   hash: null,
+13 verbose parsed url   search: null,
+13 verbose parsed url   query: null,
+13 verbose parsed url   pathname: 'grun-jsdoc@latest',
+13 verbose parsed url   path: 'grun-jsdoc@latest',
+13 verbose parsed url   href: 'grun-jsdoc@latest' }
+14 verbose cache add name="grunt-docco" spec="latest" args=["grunt-docco","latest"]
+15 verbose parsed url { protocol: null,
+15 verbose parsed url   slashes: null,
+15 verbose parsed url   auth: null,
+15 verbose parsed url   host: null,
+15 verbose parsed url   port: null,
+15 verbose parsed url   hostname: null,
+15 verbose parsed url   hash: null,
+15 verbose parsed url   search: null,
+15 verbose parsed url   query: null,
+15 verbose parsed url   pathname: 'latest',
+15 verbose parsed url   path: 'latest',
+15 verbose parsed url   href: 'latest' }
+16 verbose addNamed [ 'grunt-docco', 'latest' ]
+17 verbose addNamed [ null, null ]
+18 verbose cache add name="grun-jsdoc" spec="latest" args=["grun-jsdoc","latest"]
+19 verbose parsed url { protocol: null,
+19 verbose parsed url   slashes: null,
+19 verbose parsed url   auth: null,
+19 verbose parsed url   host: null,
+19 verbose parsed url   port: null,
+19 verbose parsed url   hostname: null,
+19 verbose parsed url   hash: null,
+19 verbose parsed url   search: null,
+19 verbose parsed url   query: null,
+19 verbose parsed url   pathname: 'latest',
+19 verbose parsed url   path: 'latest',
+19 verbose parsed url   href: 'latest' }
+20 verbose addNamed [ 'grun-jsdoc', 'latest' ]
+21 verbose addNamed [ null, null ]
+22 silly lockFile 9364e7e2-grunt-docco-latest grunt-docco@latest
+23 verbose lock grunt-docco@latest /home/mmit/bochatayy/.npm/9364e7e2-grunt-docco-latest.lock
+24 silly lockFile fbafda72-grun-jsdoc-latest grun-jsdoc@latest
+25 verbose lock grun-jsdoc@latest /home/mmit/bochatayy/.npm/fbafda72-grun-jsdoc-latest.lock
+26 info addNameTag [ 'grunt-docco', 'latest' ]
+27 verbose already installed skipping grunt@^0.4.5 /home/mmit/bochatayy/workspace/JSYG
+28 info addNameTag [ 'grun-jsdoc', 'latest' ]
+29 verbose already installed skipping grunt-contrib-concat@^0.5.0 /home/mmit/bochatayy/workspace/JSYG
+30 verbose request where is /grun-jsdoc
+31 verbose request registry https://registry.npmjs.org/
+32 verbose request id 562263d48a945f0f
+33 verbose url raw /grun-jsdoc
+34 verbose url resolving [ 'https://registry.npmjs.org/', './grun-jsdoc' ]
+35 verbose url resolved https://registry.npmjs.org/grun-jsdoc
+36 verbose request where is https://registry.npmjs.org/grun-jsdoc
+37 info trying registry request attempt 1 at 18:31:18
+38 http GET https://registry.npmjs.org/grun-jsdoc
+39 verbose request where is /grunt-docco
+40 verbose request registry https://registry.npmjs.org/
+41 verbose url raw /grunt-docco
+42 verbose url resolving [ 'https://registry.npmjs.org/', './grunt-docco' ]
+43 verbose url resolved https://registry.npmjs.org/grunt-docco
+44 verbose request where is https://registry.npmjs.org/grunt-docco
+45 info trying registry request attempt 1 at 18:31:18
+46 verbose etag "T3R3BITOM43HF3OBTWEO5PBY"
+47 http GET https://registry.npmjs.org/grunt-docco
+48 http 304 https://registry.npmjs.org/grunt-docco
+49 silly registry.get cb [ 304,
+49 silly registry.get   { date: 'Fri, 02 Oct 2015 16:31:18 GMT',
+49 silly registry.get     via: '1.1 varnish',
+49 silly registry.get     'cache-control': 'max-age=60',
+49 silly registry.get     etag: '"T3R3BITOM43HF3OBTWEO5PBY"',
+49 silly registry.get     age: '0',
+49 silly registry.get     connection: 'keep-alive',
+49 silly registry.get     'x-served-by': 'cache-lcy1132-LCY',
+49 silly registry.get     'x-cache': 'MISS',
+49 silly registry.get     'x-cache-hits': '0',
+49 silly registry.get     'x-timer': 'S1443803478.050768,VS0,VE178',
+49 silly registry.get     vary: 'Accept' } ]
+50 verbose etag https://registry.npmjs.org/grunt-docco from cache
+51 verbose addNamed [ 'grunt-docco', '0.4.0' ]
+52 verbose addNamed [ '0.4.0', '0.4.0' ]
+53 silly lockFile 509ce00b-grunt-docco-0-4-0 grunt-docco@0.4.0
+54 verbose lock grunt-docco@0.4.0 /home/mmit/bochatayy/.npm/509ce00b-grunt-docco-0-4-0.lock
+55 silly lockFile 509ce00b-grunt-docco-0-4-0 grunt-docco@0.4.0
+56 silly lockFile 509ce00b-grunt-docco-0-4-0 grunt-docco@0.4.0
+57 silly lockFile 9364e7e2-grunt-docco-latest grunt-docco@latest
+58 silly lockFile 9364e7e2-grunt-docco-latest grunt-docco@latest
+59 info already installed grunt-docco@0.4.0
+60 http 404 https://registry.npmjs.org/grun-jsdoc
+61 silly registry.get cb [ 404,
+61 silly registry.get   { 'content-type': 'application/json',
+61 silly registry.get     'cache-control': 'max-age=0',
+61 silly registry.get     'content-length': '2',
+61 silly registry.get     'accept-ranges': 'bytes',
+61 silly registry.get     date: 'Fri, 02 Oct 2015 16:31:18 GMT',
+61 silly registry.get     via: '1.1 varnish',
+61 silly registry.get     age: '0',
+61 silly registry.get     connection: 'keep-alive',
+61 silly registry.get     'x-served-by': 'cache-lcy1128-LCY',
+61 silly registry.get     'x-cache': 'MISS',
+61 silly registry.get     'x-cache-hits': '0',
+61 silly registry.get     'x-timer': 'S1443803478.048869,VS0,VE408' } ]
+62 silly lockFile fbafda72-grun-jsdoc-latest grun-jsdoc@latest
+63 silly lockFile fbafda72-grun-jsdoc-latest grun-jsdoc@latest
+64 error 404 Not Found
+64 error 404
+64 error 404 'grun-jsdoc' is not in the npm registry.
+64 error 404 You should bug the author to publish it
+64 error 404 It was specified as a dependency of 'JSYG'
+64 error 404
+64 error 404 Note that you can also install from a
+64 error 404 tarball, folder, or http url, or git url.
+65 error System Linux 3.14.32-server-1.mga4
+66 error command "/usr/bin/node" "/usr/bin/npm" "install"
+67 error cwd /home/mmit/bochatayy/workspace/JSYG
+68 error node -v v0.10.33
+69 error npm -v 1.4.28
+70 error code E404
+71 verbose exit [ 1, true ]

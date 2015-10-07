@@ -7,8 +7,8 @@ module.exports = function (grunt) {
         "jsyg-point/JSYG.Point.js",
         "jsyg-vect/JSYG.Vect.js",
         "jsyg-matrix/JSYG.Matrix.js",
-        "jsyg-utils/JSYG-utils.js",
         "jsyg-strutils/JSYG-strutils.js",
+        "jsyg-utils/JSYG-utils.js",
         "jsyg-events/JSYG.Events.js",
         "jsyg-stdconstruct/JSYG.StdConstruct.js",
     ];
@@ -27,10 +27,34 @@ module.exports = function (grunt) {
             dest: 'JSYG.js',
           },
       },
+      docco: {
+        debug: {
+            src: ['JSYG.js'],
+            options: {
+                commentMatcher : /\/\*\*/,
+                output: 'docco/'
+            }
+        }
+      },
+      jsdoc : {
+        dist : {
+            src: ['./JSYG.js'],
+            jsdoc: './node_modules/.bin/jsdoc',
+            options: {
+                destination: 'jsdoc',
+                configure: './node_modules/grunt-jsdoc/node_modules/jsdoc/conf.json',/*
+                template: './node_modules/ink-docstrap/template'*/
+            }
+        }
+      }
     });
     
     grunt.loadNpmTasks('grunt-contrib-concat');
+    
+    grunt.loadNpmTasks('grunt-jsdoc'); 
+    
+    grunt.loadNpmTasks('grunt-docco');
   
-    grunt.registerTask('default', ['concat']);
+    grunt.registerTask('default', ['concat','jsdoc']);
 
 };
