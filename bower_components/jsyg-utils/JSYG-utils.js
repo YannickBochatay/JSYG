@@ -796,6 +796,17 @@
             if (args[i]!=null) { opt[prop] = args[i]; }
         });
     }
+    
+    
+    function getPropNum(elmt,prop) {
+        
+        var val = elmt.css(prop);
+        
+        if (!val) return 0;
+        else if (val != "auto") return parseFloat(val);
+        else if (prop == "left" || prop == "top") return elmt.position()[prop];
+        else return 0;
+    }
     /**
      * définit les dimensions de la collection par rapport au parent positionné, avant transformation.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
@@ -942,8 +953,8 @@
                     
                     if ("x" in opt) mtx = mtx.translate(opt.x-box.x,0);
                     if ("y" in opt) mtx = mtx.translate(0,opt.y-box.y);
-                    if ("width" in opt && box.width!==0)	mtx = mtx.scaleX(opt.width/box.width,box.x,box.y);
-                    if ("height" in opt && box.height!==0)	mtx = mtx.scaleY(opt.height/box.height,box.x,box.y);
+                    if ("width" in opt && box.width!=0)	mtx = mtx.scaleX(opt.width/box.width,box.x,box.y);
+                    if ("height" in opt && box.height!=0)	mtx = mtx.scaleY(opt.height/box.height,box.x,box.y);
                     
                     $this.mtx2attrs({mtx:mtx});
                     
@@ -983,11 +994,11 @@
                         
                         mtx = new Matrix();
                         
-                        if ('width' in opt && dim.width!==0) {
+                        if ('width' in opt && dim.width!=0) {
                             mtx = mtx.scaleNonUniform(opt.width/dim.width,1,dim.x,dim.y);
                         }
                         
-                        if ('height' in opt && dim.height!==0) {
+                        if ('height' in opt && dim.height!=0) {
                             mtx = mtx.scaleNonUniform(1,opt.height/dim.height,dim.x,dim.y);
                         }
                         
@@ -1042,10 +1053,10 @@
                                 
                                 mtx = new Matrix();
                                 
-                                if ('width' in opt && dim.width!==0)
+                                if ('width' in opt && dim.width!=0)
                                     mtx = mtx.scaleNonUniform(opt.width/dim.width,1,dim.x,dim.y);
                                 
-                                if ('height' in opt && dim.height!==0)
+                                if ('height' in opt && dim.height!=0)
                                     mtx = mtx.scaleNonUniform(1,opt.height/dim.height,dim.x,dim.y);
                                 
                                 $this.mtx2attrs({mtx:mtx});
@@ -1057,8 +1068,8 @@
                         
                         position = $this.css('position');
                         
-                        decx = parseFloat($this.css('marginLeft') || 0);
-                        decy = parseFloat($this.css('marginTop') || 0);
+                        decx = getPropNum($this,'marginLeft');
+                        decy = getPropNum($this,'marginTop');
                         
                         if ('x' in opt || 'y' in opt) {
                             
@@ -1075,8 +1086,8 @@
                                 
                                 dim = $this.getDim();
                                 
-                                if ('x' in opt) decx = dim.x - parseFloat($this.css('left') || 0);
-                                if ('y' in opt) decy = dim.y - parseFloat($this.css('top') || 0);
+                                if ('x' in opt) decx = dim.x - getPropNum($this,'left');
+                                if ('y' in opt) decy = dim.y - getPropNum($this,'top');
                             }
                         }
                         
@@ -1088,11 +1099,11 @@
                             if (tag == 'svg') $this.css('width',opt.width).attr('width',opt.width);
                             else {
                                 
-                                node.style.width = Math.max(0,opt.width-
-                                    parseFloat($this.css('border-left-width') || 0)-
-                                    parseFloat($this.css('padding-left') || 0)-
-                                    parseFloat($this.css('border-right-width') || 0)-
-                                    parseFloat($this.css('padding-right') || 0))+'px';
+                                node.style.width = Math.max(0,opt.width
+                                    -getPropNum($this,'border-left-width')
+                                    -getPropNum($this,'padding-left')
+                                    -getPropNum($this,'border-right-width')
+                                    -getPropNum($this,'padding-right'))+'px';
                             }
                         }
                         
@@ -1100,11 +1111,11 @@
                             
                             if (tag == 'svg') $this.css('height',opt.height).attr('height',opt.height);
                             else {
-                                node.style.height = Math.max(0,opt.height-
-                                    parseFloat($this.css('border-top-width') || 0)-
-                                    parseFloat($this.css('padding-top') || 0)-
-                                    parseFloat($this.css('border-bottom-width') || 0)-
-                                    parseFloat($this.css('padding-bottom') || 0))+'px';
+                                node.style.height = Math.max(0,opt.height
+                                    -getPropNum($this,'border-top-width')
+                                    -getPropNum($this,'padding-top')
+                                    -getPropNum($this,'border-bottom-width')
+                                    -getPropNum($this,'padding-bottom'))+'px';
                             }
                         }
                     }
@@ -2307,7 +2318,7 @@
             if (!isSVG) {
                 str = "<foreignObject width='100%' height='100%'>" +
                     //+ "<style>"+JSYG.getStyleRules()+"</style>"
-                    str +
+                str +
                     "</foreignObject>";
             }
             
