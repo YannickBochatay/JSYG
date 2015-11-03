@@ -740,7 +740,7 @@
     JSYG.round = function(number,precision) {
         return Math.round(number * Math.pow(10,precision)) / Math.pow(10,precision);
     };
-	
+    	
     /*
 	JSYG.isXMLDoc = function(elem) {
 		
@@ -749,12 +749,16 @@
 		return $.isXMLDoc($elem[0]) || $elem.isSVG();
 	};*/
 	
-	
-    //Récupère toutes les fonctions statiques
     (function() {
+        
+        //Récupère toutes les fonctions statiques
         for (var n in $) {
             if ($.hasOwnProperty(n) && !JSYG.hasOwnProperty(n)) JSYG[n] = $[n];
         }
+        
+        //garde une référence vers jQuery
+        JSYG.$ = $;
+        
     }());
 	
     return JSYG;
@@ -1612,7 +1616,7 @@
     if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
     else if (root.JSYG) {
         
-        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point);
+        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
         else throw new Error("Missing dependency");
     }
     else throw new Error("JSYG is needed");
@@ -3631,7 +3635,7 @@
                 }
                 
                 $nodes.off("mousemove",mousemoveFct);
-                new JSYG(this).off("mouseup",mouseupFct);
+                new JSYG(document).off("mouseup",mouseupFct);
             }
             
             e.preventDefault();
