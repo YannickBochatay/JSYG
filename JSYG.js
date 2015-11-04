@@ -4128,6 +4128,58 @@
         });
     };
     
+    /**
+     * Move back each element before his previous sibling
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveBack = function() {
+            
+        return this.each(function() {
+           
+            var $this = new JSYG(this);
+               
+            $this.insertBefore( $this.prev() );
+        });
+    };
+    
+    /**
+     * Move back each element before his parent first child
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveToBack = function() {
+            
+        return this.each(function() {
+           
+            new JSYG(this).parent().prepend(this);
+        });
+    };
+    
+    /**
+     * Move each element after his next sibling
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveFront = function() {
+            
+        return this.each(function() {
+           
+            var $this = new JSYG(this);
+               
+            $this.insertAfter( $this.next() );
+        });
+    };
+    
+     /**
+     * Move each element after his parent last child
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveToFront = function() {
+            
+        return this.each(function() {
+           
+            new JSYG(this).parent().append(this);
+        });
+    };
+    
     
     (function add2JSYG() {
         
