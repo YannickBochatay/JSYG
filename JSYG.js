@@ -180,7 +180,7 @@
         }
     };
 	
-    JSYG.prototype.attrRemove = function(name) {
+    JSYG.prototype.removeAttr = function(name) {
 		
         if (typeof name == "string" && name == "href") return xlinkHrefRemove.call(this);
         else return $.fn.attr.apply(this,arguments);
