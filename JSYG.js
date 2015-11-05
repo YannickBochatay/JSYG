@@ -358,7 +358,7 @@
             		
             var $this = new JSYG(this);
 			
-            if ($this.isSVG() && !$this.isSVGroot() && JSYG.svgCssProperties.indexOf(cssProp) != -1) this.setAttribute(cssProp,val);
+            if ($this.isSVG() && JSYG.svgCssProperties.indexOf(cssProp) != -1) this.setAttribute(cssProp,val);
             
             $.fn.css.call($this,prop,val);
         });
@@ -679,7 +679,6 @@
 					
                     default :
                         elem.setAttribute("width",width);
-                        elem.style.width = width;
                 }
 				
                 return width+"px";
@@ -720,7 +719,6 @@
 					
                     default :
                         elem.setAttribute("height",height);
-                        elem.style.height = height;
                 }
 				
                 return height+"px";
@@ -2660,7 +2658,7 @@
                 
                 default :
                     
-                    if ($this.isSVG()) {
+                    if ($this.isSVG() && !$this.isSVGroot()) {
                         
                         //les images dont l'url est un fichier svg se comportent plus comme des conteneurs (du moins avec ff)
                         if (isSVGImage($this)) {
@@ -2719,7 +2717,7 @@
                         
                         if ("width" in opt) {
                             
-                            if (tag == 'svg') $this.css('width',opt.width).attr('width',opt.width);
+                            if (tag == 'svg') $this.css('width',opt.width);
                             else {
                                 
                                 node.style.width = Math.max(0,opt.width
@@ -2732,7 +2730,7 @@
                         
                         if ("height" in opt) {
                             
-                            if (tag == 'svg') $this.css('height',opt.height).attr('height',opt.height);
+                            if (tag == 'svg') $this.css('height',opt.height);
                             else {
                                 node.style.height = Math.max(0,opt.height
                                     -getPropNum($this,'border-top-width')
