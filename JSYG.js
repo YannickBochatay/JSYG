@@ -679,6 +679,7 @@
 					
                     default :
                         elem.setAttribute("width",width);
+                        if ($elem.isSVGroot()) elem.style.width = width;
                 }
 				
                 return width+"px";
@@ -719,6 +720,7 @@
 					
                     default :
                         elem.setAttribute("height",height);
+                        if ($elem.isSVGroot()) elem.style.height = height;
                 }
 				
                 return height+"px";
