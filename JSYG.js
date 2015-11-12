@@ -1907,7 +1907,7 @@
             
             if (isSVG && JSYG.svgGraphics.indexOf(this.tagName) == -1) return;
             
-            var style = jThis.getComputedStyle(),
+            var style = getComputedStyle(this),
             defaultStyle = jThis.getDefaultStyle(),
             styleAttr = '',
             name,value,
