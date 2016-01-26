@@ -4323,7 +4323,7 @@ return JSYG;
                 
                 p = this['on'+events[i]];
                 
-                if (p===undefined) throw events[i]+" n'est pas un événement connu";
+                if (p===undefined) throw new Error(events[i]+" n'est pas un événement connu");
                 else if (p === false || p === null) p = [fct];
                 else if (typeof p == "function") { if (p!==fct) p = [p,fct]; }
                 else if (Array.isArray(p)) { if (p.indexOf(fct)===-1)  p.push(fct); }
@@ -4361,7 +4361,7 @@ return JSYG;
                 
                 if (fct == null) { this['on'+events[i]] = null; continue; }
                 
-                if (p===undefined) throw new Error(event+" n'est pas un événement connu");
+                if (p===undefined) throw new Error(events[i]+" n'est pas un événement connu");
                 else if ((typeof p == "function") && p === fct) p = null;
                 else if (Array.isArray(p)) p.splice(p.indexOf(fct),1);
                 else if (p!==null) throw new Error(typeof p + "Type incorrect pour la propriété on"+events[i]);
