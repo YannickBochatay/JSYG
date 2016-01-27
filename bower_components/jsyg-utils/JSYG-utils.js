@@ -6,7 +6,7 @@
     if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
     else if (root.JSYG) {
         
-        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point);
+        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
         else throw new Error("Missing dependency");
     }
     else throw new Error("JSYG is needed");
@@ -284,7 +284,7 @@
             
             if (isSVG && JSYG.svgGraphics.indexOf(this.tagName) == -1) return;
             
-            var style = jThis.getComputedStyle(),
+            var style = getComputedStyle(this),
             defaultStyle = jThis.getDefaultStyle(),
             styleAttr = '',
             name,value,
@@ -369,9 +369,9 @@
             
             var $this = new JSYG(this);
             
-            $this.attrRemove('style');
+            $this.removeAttr('style');
             
-            if ($this.isSVG()) JSYG.svgCssProperties.forEach(function(attr) { $this.attrRemove(attr); });
+            if ($this.isSVG()) JSYG.svgCssProperties.forEach(function(attr) { $this.removeAttr(attr); });
             
         });
         
@@ -621,7 +621,8 @@
                 }
                 else {
                     
-                    box = this[0].getBBox();
+                    try { box = this[0].getBBox(); }
+                    catch(e) { return null; }
                     
                     dim = { //box est en lecture seule
                         x : box.x,
@@ -653,7 +654,7 @@
                 height = parseFloat(this.css("height"));
                 
                 viewBox = this.attr("viewBox");
-                if (viewBox) this.attrRemove("viewBox");
+                if (viewBox) this.removeAttr("viewBox");
                 
                 mtx = this.getMtx('screen');
                 
@@ -897,11 +898,16 @@
                 
                 if (tag == "g") mtx = $this.getMtx();
                 
-                if (opt.x!=null) newDim.x = dim.x + pt2.x - pt1.x;
-                if (opt.y!=null) newDim.y = dim.y + pt2.y - pt1.y;
-                if (opt.width!=null) newDim.width = dim.width + pt4.x - pt3.x;
-                if (opt.height!=null) newDim.height = dim.height + pt4.y - pt3.y;
+                if (opt.x!=null || opt.y!=null) {
+                    newDim.x = dim.x + pt2.x - pt1.x;
+                    newDim.y = dim.y + pt2.y - pt1.y;
+                }
                 
+                if (opt.width!=null || opt.height!=null) {
+                    newDim.width = dim.width + pt4.x - pt3.x;
+                    newDim.height = dim.height + pt4.y - pt3.y;
+                }
+                                
                 $this.setDim(newDim);
                 
                 if (tag == "g") $this.setMtx( mtx.multiply($this.getMtx()) );
@@ -973,7 +979,7 @@
                         if (tag == 'text') dec = (parseFloat($this.attr("x")) || 0) - dim.x;
                         else {
                             dec = -dim.x;
-                            if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('x'));
+                            if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('x')) || 0;
                         }
                         
                         $this.attr('x',opt.x + dec);
@@ -984,13 +990,13 @@
                         if (tag == 'text') dec = (parseFloat($this.attr("y")) || 0) - dim.y;
                         else {
                             dec = -dim.y;
-                            if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('y'));
+                            if (JSYG.support.svgUseBBox) dec += parseFloat($this.attr('y')) || 0;
                         }
                         
                         $this.attr('y',opt.y + dec);
                     }
                     
-                    if ('width' in opt || 'height' in opt) {
+                    if ('width' in opt && dim.width!=0 || 'height' in opt && dim.height!=0) {
                         
                         mtx = new Matrix();
                         
@@ -1037,7 +1043,7 @@
                 
                 default :
                     
-                    if ($this.isSVG()) {
+                    if ($this.isSVG() && !$this.isSVGroot()) {
                         
                         //les images dont l'url est un fichier svg se comportent plus comme des conteneurs (du moins avec ff)
                         if (isSVGImage($this)) {
@@ -1096,7 +1102,7 @@
                         
                         if ("width" in opt) {
                             
-                            if (tag == 'svg') $this.css('width',opt.width).attr('width',opt.width);
+                            if (tag == 'svg') $this.css('width',opt.width);
                             else {
                                 
                                 node.style.width = Math.max(0,opt.width
@@ -1109,7 +1115,7 @@
                         
                         if ("height" in opt) {
                             
-                            if (tag == 'svg') $this.css('height',opt.height).attr('height',opt.height);
+                            if (tag == 'svg') $this.css('height',opt.height);
                             else {
                                 node.style.height = Math.max(0,opt.height
                                     -getPropNum($this,'border-top-width')
@@ -1831,6 +1837,8 @@
         
         var mtx,rect;
         
+        if (evt instanceof JSYG.Event) evt = evt.originalEvent;
+        
         if (ref && !(ref instanceof JSYG)) ref = new JSYG(ref);
         
         if (ref.isSVG()) {
@@ -2025,7 +2033,7 @@
                 }
                 
                 $nodes.off("mousemove",mousemoveFct);
-                new JSYG(this).off("mouseup",mouseupFct);
+                new JSYG(document).off("mouseup",mouseupFct);
             }
             
             e.preventDefault();
@@ -2346,7 +2354,9 @@
         
         if (standalone && this.isSVG()) {
             jNode.walkTheDom(function() {
-                new JSYG(this).style2attr().attrRemove("style");
+                var $this = new JSYG(this);
+                $this.style2attr();
+                if (JSYG.svgGraphics.indexOf($this.getTag()) != -1) $this.removeAttr("style");
             });
         }
         
@@ -2466,7 +2476,7 @@
             }) );
         }
         
-        if (recursive) this.each(function() { JSYG.walkTheDom(this,url2data); });
+        if (recursive) this.each(function() { JSYG.walkTheDom(url2data,this); });
         else this.each(url2data);
         
         return Promise.all(promises);
@@ -2493,7 +2503,7 @@
         canvas.height = dim.height;
         
         if (tag == "img" || tag == "image") promise = Promise.resolve( this.href() );
-        else promise = this.toDataURL();
+        else promise = this.toDataURL(true);
         
         return promise.then(function(src) {
             
@@ -2518,16 +2528,128 @@
         });
     };
     
+    /**
+     * Move back each element before his previous sibling
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveBackwards = function() {
+        
+        return this.each(function() {
+            
+            var $this = new JSYG(this);
+            
+            $this.insertBefore( $this.prev() );
+        });
+    };
     
-    (function add2JSYG() {
+    /**
+     * Move back each element before his parent first child
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveBack = function() {
         
-        for (var n in strUtils) JSYG[n] = strUtils[n];
-        
-        JSYG.Matrix = Matrix;
-        JSYG.Vect = Vect;
-        JSYG.Point = Point;
-        
-    }());
+        return this.each(function() {
+            
+            new JSYG(this).parent().prepend(this);
+        });
+    };
     
-    return JSYG;
+    /**
+     * Move each element after his next sibling
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveForwards = function() {
+        
+        return this.each(function() {
+            
+            var $this = new JSYG(this);
+            
+            $this.insertAfter( $this.next() );
+        });
+    };
+    
+    /**
+     * Move each element after his parent last child
+     * @returns {JSYG}
+     */
+    JSYG.prototype.moveFront = function() {
+        
+        return this.each(function() {
+            
+            new JSYG(this).parent().append(this);
+        });
+    };
+    
+    
+    JSYG.prototype.getUniqueSelector = function () {
+        
+        var path;
+        
+        var $node = this;
+        /*Include only names and IDs since you can always programmatically add/remove classes*/
+        var uniqueTags = ['name', 'id'];
+        
+        while ($node.length) {
+            
+            var realNode = $node[0],
+            name = realNode.localName,
+            parent,
+            uniqueIdentifierFound,
+            i,tag,tagValue,sameTagSiblings,allSiblings,index;
+            
+            if (!name) break;
+            
+            name = name.toLowerCase();
+            parent = $node.parent();
+            uniqueIdentifierFound = false;
+            
+            for (i=uniqueTags.length-1 ; i>= 0 ; i--) {
+                
+                tag = uniqueTags[i];
+                tagValue = $node.attr(tag);
+                
+                if (tagValue && (tagValue.trim !== '')) {
+                    
+                    name = '[' + tag + '=\"' + tagValue + '\"]';
+                    uniqueIdentifierFound = true;
+                    break;
+                }
+            }
+            
+            if (!uniqueIdentifierFound) {
+                sameTagSiblings = parent.children(name);
+                
+                if (sameTagSiblings.length > 1) {
+                    
+                    allSiblings = parent.children();
+                    index = allSiblings.index(realNode) + 1;
+                    name += ':nth-child(' + index + ')';
+                }
+                
+                path = name + (path ? '>' + path : '');
+                $node = parent;
+                
+            }
+            else {
+                path = name + (path ? '>' + path : '');
+                break; //exit while loop
+            }
+        }
+        
+        return path;
+    };
+
+
+
+(function add2JSYG() {
+    
+    for (var n in strUtils) JSYG[n] = strUtils[n];
+    
+    JSYG.Matrix = Matrix;
+    JSYG.Vect = Vect;
+    JSYG.Point = Point;
+    
+}());
+
+return JSYG;
 });

@@ -16,7 +16,8 @@
         "jsyg-wrapper":"latest",
         "jsyg-utils":"latest",
         "jsyg-strutils":"latest",
-        "jsyg-stdconstruct":"latest"
+        "jsyg-stdconstruct":"latest",
+        "jsyg-vmouse":"latest"
     },
     "repository": {
         "type": "git",

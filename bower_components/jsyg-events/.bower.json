@@ -34,12 +34,12 @@
     "library"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG.Events",
-  "version": "0.1.2",
-  "_release": "0.1.2",
+  "version": "0.2.1",
+  "_release": "0.2.1",
   "_resolution": {
     "type": "version",
-    "tag": "v0.1.2",
-    "commit": "d64b50aa942402fffa6fe61ea5f657bbd00c03f9"
+    "tag": "v0.2.1",
+    "commit": "f31961a2068ff9b0f738a5f6868e2e238cdbf58b"
   },
   "_source": "git://github.com/YannickBochatay/JSYG.Events.git",
   "_target": "*",

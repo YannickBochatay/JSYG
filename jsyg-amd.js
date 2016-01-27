@@ -3,7 +3,8 @@ if (typeof define == "function" && define.amd) {
     define("jsyg",[
         "jsyg-utils",
         "jsyg-events",
-        "jsyg-stdconstruct"
+        "jsyg-stdconstruct",
+        "jsyg-vmouse"
     ],
     function(JSYG,Events,StdConstruct) {
 
