@@ -11,7 +11,7 @@ It's just a concatenation of modules :
 * [jsyg-events](https://github.com/YannickBochatay/JSYG.Events)
 * [jsyg-stdconstruct](https://github.com/YannickBochatay/JSYG.StdConstruct)
 
-It also includes jquery virtual mouse bindings.
+It also includes jquery virtual mouse bindings, and [isMobile](https://github.com/kaimallea/isMobile) library.
 
 Each of these modules can be used standalone if you don't need JSYG framework.
 

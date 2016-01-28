@@ -17,7 +17,8 @@
         "jsyg-utils":"latest",
         "jsyg-strutils":"latest",
         "jsyg-stdconstruct":"latest",
-        "jsyg-vmouse":"latest"
+        "jsyg-vmouse":"latest",
+        "isMobile":"latest"
     },
     "repository": {
         "type": "git",

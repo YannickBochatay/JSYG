@@ -141,4 +141,9 @@ if (typeof require!= "undefined") {
         equal( JSYG.dasherize("totoTataTiti"), "toto-tata-titi" ,"camelize");
     });
     
+    test("Detection mobile", function() {
+       
+        equal( typeof JSYG.isMobile, "object", "isMobile");
+    });
+    
 }));
