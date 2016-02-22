@@ -2054,7 +2054,7 @@
         this.each(function() {
             
             var $this = new JSYG(this),
-            attrs = this.data(prop),
+            attrs = $this.data(prop),
             style;
             
             if (!attrs) return;
