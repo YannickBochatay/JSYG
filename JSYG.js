@@ -2173,6 +2173,47 @@
     }
     
     /**
+     * Display par défaut des éléments
+     */
+    var elementDisplay = {};
+	
+    /**
+     * Renvoie le display par défaut de l'élément. Tir� de zepto.js. Peut mieux faire.
+     */
+    function defaultDisplay(obj) {
+	
+        var element, display,
+        nodeName = obj.getTag(),
+        isSVG = obj.isSVG(),
+        parent;
+		
+        if (!elementDisplay[nodeName]) {
+			
+            parent = (isSVG) ? new JSYG('<svg>').appendTo('body') : 'body';
+			
+            element = new JSYG('<'+nodeName+'>').appendTo(parent);
+            display = element.css('display');
+			
+            if (isSVG) parent.remove();
+            else element.remove();
+			
+            if (display == "none") display = "block";
+			
+            elementDisplay[nodeName] = display;
+        }
+		
+        return elementDisplay[nodeName];
+    }
+    
+    JSYG.prototype.originalDisplay = function(_value) {
+		
+        var prop = "originalDisplay";
+		
+        if (_value == null) return this.data(prop) || defaultDisplay(this);
+        else { this.data(prop,_value); return this; }
+    };
+    
+    /**
      * Récupération des dimensions de l'élément sous forme d'objet avec les propriétés x,y,width,height.
      * Pour les éléments HTML, Les dimensions prennent en compte padding, border mais pas margin.<br/><br/>
      * Pour les éléments SVG (balises &lt;svg&gt; comprises), ce sont les dimensions sans tenir compte de l'épaisseur du tracé (stroke-width)
@@ -2756,7 +2797,53 @@
         
         return this;
     };
+        
+    JSYG.fit = function(dim,dimContainer) {
+        
+        var ratio = {
+            x : dim.width / dimContainer.width,
+            y : dim.height / dimContainer.height
+        },
+        width,height;
+                
+        if (ratio.x > ratio.y) {
+            height = dim.height * dimContainer.width / dim.width;
+            width = dimContainer.width;
+        }
+        else {
+            width = dim.width * dimContainer.height / dim.height;
+            height = dimContainer.height;
+        }
+        
+        return {
+            width:width,
+            height:height
+        };
+    };
     
+    /**
+     * Adapte la taille des éléments au mieux sans déformation
+     * @param {Object} dimContainer doit contenir les propriétés width et height. Si omis, prend les dimensions du premier parent positionné.
+     * @returns {JSYG}
+     */
+    JSYG.prototype.fit = function(dimContainer) {
+        
+        return this.each(function() {
+            
+            var $this = JSYG(this),
+            dim;
+            
+            if (!dimContainer) dimContainer = $this.offsetParent().getDim();
+            
+            if (dimContainer.keepRatio === false) dim = dimContainer;
+            else dim = JSYG.fit($this.getDim(), dimContainer);
+
+            dim.x = 0;
+            dim.y = 0;
+
+            $this.setDim(dim);
+        });
+    };
     
     /**
      * Utile plutot en interne ou pour la création de plugins.
