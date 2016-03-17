@@ -6,13 +6,13 @@
  * The original source of google-diff-match-patch is attributable and licensed as follows:
  *
  * Copyright 2006 Google Inc.
- * http://code.google.com/p/google-diff-match-patch/
+ * https://code.google.com/p/google-diff-match-patch/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -239,7 +239,7 @@ QUnit.diff = ( function() {
 			return 0;
 		}
 		// Binary search.
-		// Performance analysis: http://neil.fraser.name/news/2007/10/09/
+		// Performance analysis: https://neil.fraser.name/news/2007/10/09/
 		pointermin = 0;
 		pointermax = Math.min( text1.length, text2.length );
 		pointermid = pointermax;
@@ -272,7 +272,7 @@ QUnit.diff = ( function() {
 			return 0;
 		}
 		// Binary search.
-		// Performance analysis: http://neil.fraser.name/news/2007/10/09/
+		// Performance analysis: https://neil.fraser.name/news/2007/10/09/
 		pointermin = 0;
 		pointermax = Math.min( text1.length, text2.length );
 		pointermid = pointermax;
@@ -854,7 +854,7 @@ QUnit.diff = ( function() {
 
 		// Start by looking for a single character match
 		// and increase length until no match is found.
-		// Performance analysis: http://neil.fraser.name/news/2010/11/04/
+		// Performance analysis: https://neil.fraser.name/news/2010/11/04/
 		best = 0;
 		length = 1;
 		while ( true ) {
@@ -989,7 +989,7 @@ QUnit.diff = ( function() {
 				// Upon reaching an equality, check for prior redundancies.
 				if ( countDelete + countInsert > 1 ) {
 					if ( countDelete !== 0 && countInsert !== 0 ) {
-						// Factor out any common prefixies.
+						// Factor out any common prefixes.
 						commonlength = this.diffCommonPrefix( textInsert, textDelete );
 						if ( commonlength !== 0 ) {
 							if ( ( pointer - countDelete - countInsert ) > 0 &&

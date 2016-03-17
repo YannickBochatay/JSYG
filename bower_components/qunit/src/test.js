@@ -1,4 +1,5 @@
 var focused = false;
+var priorityCount = 0;
 
 function Test( settings ) {
 	var i, l;
@@ -270,21 +271,23 @@ Test.prototype = {
 		return synchronize( run, priority );
 	},
 
-	push: function( result, actual, expected, message, negative ) {
+	pushResult: function( resultInfo ) {
+
+		// resultInfo = { result, actual, expected, message, negative }
 		var source,
 			details = {
 				module: this.module.name,
 				name: this.testName,
-				result: result,
-				message: message,
-				actual: actual,
-				expected: expected,
+				result: resultInfo.result,
+				message: resultInfo.message,
+				actual: resultInfo.actual,
+				expected: resultInfo.expected,
 				testId: this.testId,
-				negative: negative || false,
+				negative: resultInfo.negative || false,
 				runtime: now() - this.started
 			};
 
-		if ( !result ) {
+		if ( !resultInfo.result ) {
 			source = sourceFromStacktrace();
 
 			if ( source ) {
@@ -295,8 +298,8 @@ Test.prototype = {
 		runLoggingCallbacks( "log", details );
 
 		this.assertions.push({
-			result: !!result,
-			message: message
+			result: !!resultInfo.result,
+			message: resultInfo.message
 		});
 	},
 
@@ -356,10 +359,10 @@ Test.prototype = {
 	},
 
 	valid: function() {
-		var include,
-			filter = config.filter && config.filter.toLowerCase(),
+		var filter = config.filter,
+			regexFilter = /^(!?)\/([\w\W]*)\/(i?$)/.exec( filter ),
 			module = QUnit.urlParams.module && QUnit.urlParams.module.toLowerCase(),
-			fullName = ( this.module.name + ": " + this.testName ).toLowerCase();
+			fullName = ( this.module.name + ": " + this.testName );
 
 		function testInModuleChain( testModule ) {
 			var testModuleName = testModule.name ? testModule.name.toLowerCase() : null;
@@ -389,7 +392,23 @@ Test.prototype = {
 			return true;
 		}
 
-		include = filter.charAt( 0 ) !== "!";
+		return regexFilter ?
+			this.regexFilter( !!regexFilter[1], regexFilter[2], regexFilter[3], fullName ) :
+			this.stringFilter( filter, fullName );
+	},
+
+	regexFilter: function( exclude, pattern, flags, fullName ) {
+		var regex = new RegExp( pattern, flags );
+		var match = regex.test( fullName );
+
+		return match !== exclude;
+	},
+
+	stringFilter: function( filter, fullName ) {
+		filter = filter.toLowerCase();
+		fullName = fullName.toLowerCase();
+
+		var include = filter.charAt( 0 ) !== "!";
 		if ( !include ) {
 			filter = filter.slice( 1 );
 		}
@@ -473,7 +492,7 @@ function synchronize( callback, priority ) {
 	}
 
 	if ( priority ) {
-		priorityFill( callback );
+		config.queue.splice( priorityCount++, 0, callback );
 	} else {
 		config.queue.push( callback );
 	}
@@ -482,22 +501,6 @@ function synchronize( callback, priority ) {
 		process( last );
 	}
 }
-
-// Place previously failed tests on a queue priority line, respecting the order they get assigned.
-function priorityFill( callback ) {
-	var queue, prioritizedQueue;
-
-	queue = config.queue.slice( priorityFill.pos );
-	prioritizedQueue = config.queue.slice( 0, -config.queue.length + priorityFill.pos );
-
-	queue.unshift( callback );
-	queue.unshift.apply( queue, prioritizedQueue );
-
-	config.queue = queue;
-
-	priorityFill.pos += 1;
-}
-priorityFill.pos = 0;
 
 function saveGlobal() {
 	config.pollution = [];

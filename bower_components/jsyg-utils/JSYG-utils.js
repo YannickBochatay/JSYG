@@ -3,15 +3,15 @@
 
 (function(root,factory) {
     
-    if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
-    else if (root.JSYG) {
+    if (typeof define == "function" && define.amd) define("jsyg-utils",["jquery","jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
+    else if (root.JSYG && root.jQuery) {
         
-        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
+        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(jQuery,JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
         else throw new Error("Missing dependency");
     }
     else throw new Error("JSYG is needed");
     
-})(this,function(JSYG,Matrix,Vect,Point,strUtils) {
+})(this,function($,JSYG,Matrix,Vect,Point,strUtils) {
     
     "use strict";
     
@@ -431,7 +431,7 @@
         this.each(function() {
             
             var $this = new JSYG(this),
-            attrs = this.data(prop),
+            attrs = $this.data(prop),
             style;
             
             if (!attrs) return;
@@ -548,6 +548,47 @@
         
         return returnValue;
     }
+    
+    /**
+     * Display par défaut des éléments
+     */
+    var elementDisplay = {};
+	
+    /**
+     * Renvoie le display par défaut de l'élément. Tir� de zepto.js. Peut mieux faire.
+     */
+    function defaultDisplay(obj) {
+	
+        var element, display,
+        nodeName = obj.getTag(),
+        isSVG = obj.isSVG(),
+        parent;
+		
+        if (!elementDisplay[nodeName]) {
+			
+            parent = (isSVG) ? new JSYG('<svg>').appendTo('body') : 'body';
+			
+            element = new JSYG('<'+nodeName+'>').appendTo(parent);
+            display = element.css('display');
+			
+            if (isSVG) parent.remove();
+            else element.remove();
+			
+            if (display == "none") display = "block";
+			
+            elementDisplay[nodeName] = display;
+        }
+		
+        return elementDisplay[nodeName];
+    }
+    
+    JSYG.prototype.originalDisplay = function(_value) {
+		
+        var prop = "originalDisplay";
+		
+        if (_value == null) return this.data(prop) || defaultDisplay(this);
+        else { this.data(prop,_value); return this; }
+    };
     
     /**
      * Récupération des dimensions de l'élément sous forme d'objet avec les propriétés x,y,width,height.
@@ -1133,7 +1174,53 @@
         
         return this;
     };
+        
+    JSYG.fit = function(dim,dimContainer) {
+        
+        var ratio = {
+            x : dim.width / dimContainer.width,
+            y : dim.height / dimContainer.height
+        },
+        width,height;
+                
+        if (ratio.x > ratio.y) {
+            height = dim.height * dimContainer.width / dim.width;
+            width = dimContainer.width;
+        }
+        else {
+            width = dim.width * dimContainer.height / dim.height;
+            height = dimContainer.height;
+        }
+        
+        return {
+            width:width,
+            height:height
+        };
+    };
     
+    /**
+     * Adapte la taille des éléments au mieux sans déformation
+     * @param {Object} dimContainer doit contenir les propriétés width et height. Si omis, prend les dimensions du premier parent positionné.
+     * @returns {JSYG}
+     */
+    JSYG.prototype.fit = function(dimContainer) {
+        
+        return this.each(function() {
+            
+            var $this = JSYG(this),
+            dim;
+            
+            if (!dimContainer) dimContainer = $this.offsetParent().getDim();
+            
+            if (dimContainer.keepRatio === false) dim = dimContainer;
+            else dim = JSYG.fit($this.getDim(), dimContainer);
+
+            dim.x = 0;
+            dim.y = 0;
+
+            $this.setDim(dim);
+        });
+    };
     
     /**
      * Utile plutot en interne ou pour la création de plugins.
@@ -2092,6 +2179,12 @@
         return false;
         
     })();
+    
+    
+    //http://jointjs.com/blog/get-transform-to-element-polyfill.html
+    SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(toElement) {
+        return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
+    };
     
     JSYG(function() {
         
