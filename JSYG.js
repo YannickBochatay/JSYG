@@ -940,7 +940,7 @@
     
     "use strict";
     
-    var svg = this.document && this.document.createElementNS && this.document.createElementNS('http://www.w3.org/2000/svg','svg');
+    var svg = typeof document != "undefined" && document.createElementNS && document.createElementNS('http://www.w3.org/2000/svg','svg');
     
     function round(number,precision) {
         return Math.round(number * Math.pow(10,precision)) / Math.pow(10,precision);
@@ -1322,7 +1322,7 @@
     
     return Matrix;
     
-}.bind(this));
+});
 
 (function(root,factory) {
     
