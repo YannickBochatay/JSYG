@@ -1626,15 +1626,15 @@
 
 (function(root,factory) {
     
-    if (typeof define == "function" && define.amd) define("jsyg-utils",["jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
-    else if (root.JSYG) {
+    if (typeof define == "function" && define.amd) define("jsyg-utils",["jquery","jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
+    else if (root.JSYG && root.jQuery) {
         
-        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
+        if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(jQuery,JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
         else throw new Error("Missing dependency");
     }
     else throw new Error("JSYG is needed");
     
-})(this,function(JSYG,Matrix,Vect,Point,strUtils) {
+})(this,function($,JSYG,Matrix,Vect,Point,strUtils) {
     
     "use strict";
     
