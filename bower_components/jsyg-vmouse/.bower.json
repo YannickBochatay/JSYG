@@ -1,5 +1,5 @@
 {
-  "name": "jsyg",
+  "name": "jsyg-vmouse",
   "authors": [
     "Yannick Bochatay"
   ],
@@ -7,15 +7,13 @@
   "main": "JSYG-vmouse.js",
   "moduleType": [
     "amd",
-    "globals"
+    "globals",
+    "node"
   ],
   "dependencies": {
-    "jquery": "latest"
+    "jquery": "^2.2.3"
   },
-  "devDependencies": {
-    "qunit": "latest",
-    "requirejs": "latest"
-  },
+  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git://github.com/YannickBochatay/JSYG-vmouse.git"
@@ -25,7 +23,8 @@
     "**/.*",
     "tests",
     "bower_components",
-    "nbproject"
+    "nbproject",
+    "node_modules"
   ],
   "keywords": [
     "svg",
@@ -35,14 +34,14 @@
     "library"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG-vmouse",
-  "version": "0.0.1",
-  "_release": "0.0.1",
+  "version": "0.0.2",
+  "_release": "0.0.2",
   "_resolution": {
     "type": "version",
-    "tag": "v0.0.1",
-    "commit": "50b2221aec8ff406cbb1413c8109aea736688bc5"
+    "tag": "v0.0.2",
+    "commit": "c6cda1b3101aad31b18564983e31b431b565480f"
   },
-  "_source": "git://github.com/YannickBochatay/JSYG-vmouse.git",
+  "_source": "https://github.com/YannickBochatay/JSYG-vmouse.git",
   "_target": "*",
   "_originalSource": "jsyg-vmouse"
 }

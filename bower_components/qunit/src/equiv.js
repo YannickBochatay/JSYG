@@ -1,6 +1,6 @@
 // Test for equality any JavaScript type.
 // Author: Philippe Rathé <prathe@gmail.com>
-QUnit.equiv = (function() {
+QUnit.equiv = ( function() {
 
 	// Stack to decide between skip/abort functions
 	var callers = [];
@@ -96,7 +96,8 @@ QUnit.equiv = (function() {
 
 			len = a.length;
 			if ( len !== b.length ) {
-				// safe and faster
+
+				// Safe and faster
 				return false;
 			}
 
@@ -130,33 +131,53 @@ QUnit.equiv = (function() {
 		},
 
 		"set": function( b, a ) {
-			var aArray, bArray;
+			var innerEq,
+				outerEq = true;
 
-			aArray = [];
-			a.forEach( function( v ) {
-				aArray.push( v );
-			});
-			bArray = [];
-			b.forEach( function( v ) {
-				bArray.push( v );
-			});
+			if ( a.size !== b.size ) {
+				return false;
+			}
 
-			return innerEquiv( bArray, aArray );
+			a.forEach( function( aVal ) {
+				innerEq = false;
+
+				b.forEach( function( bVal ) {
+					if ( innerEquiv( bVal, aVal ) ) {
+						innerEq = true;
+					}
+				} );
+
+				if ( !innerEq ) {
+					outerEq = false;
+				}
+			} );
+
+			return outerEq;
 		},
 
 		"map": function( b, a ) {
-			var aArray, bArray;
+			var innerEq,
+				outerEq = true;
 
-			aArray = [];
-			a.forEach( function( v, k ) {
-				aArray.push( [ k, v ] );
-			});
-			bArray = [];
-			b.forEach( function( v, k ) {
-				bArray.push( [ k, v ] );
-			});
+			if ( a.size !== b.size ) {
+				return false;
+			}
 
-			return innerEquiv( bArray, aArray );
+			a.forEach( function( aVal, aKey ) {
+				innerEq = false;
+
+				b.forEach( function( bVal, bKey ) {
+					if ( innerEquiv( [ bVal, bKey ], [ aVal, aKey ] ) ) {
+						innerEq = true;
+					}
+				} );
+
+				if ( !innerEq ) {
+					outerEq = false;
+				}
+			} );
+
+			return outerEq;
 		},
 
 		"object": function( b, a ) {
@@ -238,4 +259,4 @@ QUnit.equiv = (function() {
 	}
 
 	return innerEquiv;
-}());
+}() );

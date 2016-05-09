@@ -144,7 +144,7 @@
     
     if (typeof JSYG != "undefined") JSYG.Events = Events;
     
-    if (typeof module === "object" && typeof module.exports === "object") module.exports = Events;
+    if (typeof module == "object" && typeof module.exports == "object" ) module.exports = Events;
     else if (typeof define == 'function' && define.amd) define("jsyg-events",function() { return Events; });
     else this.Events = Events;
     

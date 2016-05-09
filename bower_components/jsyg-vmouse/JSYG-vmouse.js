@@ -9,7 +9,16 @@
 */
 
 (function ( root, doc, factory ) {
-	if ( typeof define === "function" && define.amd ) {
+  
+        if (typeof module == "object" && typeof module.exports == "object") {
+          
+          var $ = require("jquery");
+          
+          factory( $, root, doc );
+          
+          module.exports = $.mobile;
+        }
+        else if ( typeof define === "function" && define.amd ) {
 		// AMD. Register as an anonymous module.
 		define( "jsyg-vmouse",[ "jquery" ], function ( $ ) {
 			factory( $, root, doc );

@@ -33,14 +33,14 @@
     "library"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG.Point",
-  "version": "0.1.3",
-  "_release": "0.1.3",
+  "version": "0.1.4",
+  "_release": "0.1.4",
   "_resolution": {
     "type": "version",
-    "tag": "v0.1.3",
-    "commit": "bf28a1bee913a11d935013a986034cef171b70ba"
+    "tag": "v0.1.4",
+    "commit": "6d6a3f4bd932757b1f401b0f9a5c9c0fd29b36e3"
   },
-  "_source": "git://github.com/YannickBochatay/JSYG.Point.git",
+  "_source": "https://github.com/YannickBochatay/JSYG.Point.git",
   "_target": "*",
   "_originalSource": "jsyg-point"
 }

@@ -1,6 +1,7 @@
 (function(root,factory) {
     
-    if (typeof define == "function" && define.amd) define("jsyg-strutils",factory);
+    if (typeof module == "object" && typeof module.exports == "object" ) module.exports = factory();
+    else if (typeof define == "function" && define.amd) define("jsyg-strutils",factory);
     else if (typeof JSYG != "undefined") factory();
     else root.strUtils = factory();
     

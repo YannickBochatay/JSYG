@@ -33,14 +33,14 @@
     "string"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG-strutils",
-  "version": "0.1.1",
-  "_release": "0.1.1",
+  "version": "0.1.2",
+  "_release": "0.1.2",
   "_resolution": {
     "type": "version",
-    "tag": "v0.1.1",
-    "commit": "61da49376433ddc5f98c493a819f059a03dc67bc"
+    "tag": "v0.1.2",
+    "commit": "c83e61cd0c3117e12620fa7f2b3635b939ad922d"
   },
-  "_source": "git://github.com/YannickBochatay/JSYG-strutils.git",
+  "_source": "https://github.com/YannickBochatay/JSYG-strutils.git",
   "_target": "*",
   "_originalSource": "jsyg-strutils"
 }

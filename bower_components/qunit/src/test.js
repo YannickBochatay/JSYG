@@ -1,5 +1,6 @@
 var focused = false;
 var priorityCount = 0;
+var unitSampler;
 
 function Test( settings ) {
 	var i, l;
@@ -22,10 +23,10 @@ function Test( settings ) {
 
 	this.testId = generateHash( this.module.name, this.testName );
 
-	this.module.tests.push({
+	this.module.tests.push( {
 		name: this.testName,
 		testId: this.testId
-	});
+	} );
 
 	if ( settings.skip ) {
 
@@ -61,14 +62,14 @@ Test.prototype = {
 					passed: config.moduleStats.all - config.moduleStats.bad,
 					total: config.moduleStats.all,
 					runtime: now() - config.moduleStats.started
-				});
+				} );
 			}
 			config.previousModule = this.module;
 			config.moduleStats = { all: 0, bad: 0, started: now() };
 			runLoggingCallbacks( "moduleStart", {
 				name: this.module.name,
 				tests: this.module.tests
-			});
+			} );
 		}
 
 		config.current = this;
@@ -84,7 +85,7 @@ Test.prototype = {
 			name: this.testName,
 			module: this.module.name,
 			testId: this.testId
-		});
+		} );
 
 		if ( !config.pollution ) {
 			saveGlobal();
@@ -113,7 +114,7 @@ Test.prototype = {
 			this.pushFailure( "Died on test #" + ( this.assertions.length + 1 ) + " " +
 				this.stack + ": " + ( e.message || e ), extractStacktrace( e, 0 ) );
 
-			// else next test will carry the responsibility
+			// Else next test will carry the responsibility
 			saveGlobal();
 
 			// Restart the tests if they're blocking
@@ -222,7 +223,7 @@ Test.prototype = {
 
 			// DEPRECATED: this property will be removed in 2.0.0, use runtime instead
 			duration: this.runtime
-		});
+		} );
 
 		// QUnit.reset() is deprecated and will be replaced for a new
 		// fixture reset function on QUnit 2.0/2.1.
@@ -242,8 +243,8 @@ Test.prototype = {
 
 		function run() {
 
-			// each of these can by async
-			synchronize([
+			// Each of these can by async
+			synchronize( [
 				function() {
 					test.before();
 				},
@@ -261,19 +262,19 @@ Test.prototype = {
 				function() {
 					test.finish();
 				}
-			]);
+			] );
 		}
 
 		// Prioritize previously failed tests, detected from sessionStorage
 		priority = QUnit.config.reorder && defined.sessionStorage &&
 				+sessionStorage.getItem( "qunit-test-" + this.module.name + "-" + this.testName );
 
-		return synchronize( run, priority );
+		return synchronize( run, priority, config.seed );
 	},
 
 	pushResult: function( resultInfo ) {
 
-		// resultInfo = { result, actual, expected, message, negative }
+		// Destructure of resultInfo = { result, actual, expected, message, negative }
 		var source,
 			details = {
 				module: this.module.name,
@@ -297,10 +298,10 @@ Test.prototype = {
 
 		runLoggingCallbacks( "log", details );
 
-		this.assertions.push({
+		this.assertions.push( {
 			result: !!resultInfo.result,
 			message: resultInfo.message
-		});
+		} );
 	},
 
 	pushFailure: function( message, source, actual ) {
@@ -325,10 +326,10 @@ Test.prototype = {
 
 		runLoggingCallbacks( "log", details );
 
-		this.assertions.push({
+		this.assertions.push( {
 			result: false,
 			message: message
-		});
+		} );
 	},
 
 	resolvePromise: function( promise, phase ) {
@@ -347,7 +348,7 @@ Test.prototype = {
 							" " + test.testName + ": " + ( error.message || error );
 						test.pushFailure( message, extractStacktrace( error, 0 ) );
 
-						// else next test will carry the responsibility
+						// Else next test will carry the responsibility
 						saveGlobal();
 
 						// Unblock
@@ -361,18 +362,23 @@ Test.prototype = {
 	valid: function() {
 		var filter = config.filter,
 			regexFilter = /^(!?)\/([\w\W]*)\/(i?$)/.exec( filter ),
-			module = QUnit.urlParams.module && QUnit.urlParams.module.toLowerCase(),
+			module = config.module && config.module.toLowerCase(),
 			fullName = ( this.module.name + ": " + this.testName );
 
-		function testInModuleChain( testModule ) {
+		function moduleChainNameMatch( testModule ) {
 			var testModuleName = testModule.name ? testModule.name.toLowerCase() : null;
 			if ( testModuleName === module ) {
 				return true;
 			} else if ( testModule.parentModule ) {
-				return testInModuleChain( testModule.parentModule );
+				return moduleChainNameMatch( testModule.parentModule );
 			} else {
 				return false;
 			}
+		}
+
+		function moduleChainIdMatch( testModule ) {
+			return inArray( testModule.moduleId, config.moduleId ) > -1 ||
+				testModule.parentModule && moduleChainIdMatch( testModule.parentModule );
 		}
 
 		// Internally-generated tests are always valid
@@ -380,11 +386,19 @@ Test.prototype = {
 			return true;
 		}
 
-		if ( config.testId.length > 0 && inArray( this.testId, config.testId ) < 0 ) {
+		if ( config.moduleId && config.moduleId.length > 0 &&
+			!moduleChainIdMatch( this.module ) ) {
+
 			return false;
 		}
 
-		if ( module && !testInModuleChain( this.module ) ) {
+		if ( config.testId && config.testId.length > 0 &&
+			inArray( this.testId, config.testId ) < 0 ) {
+
+			return false;
+		}
+
+		if ( module && !moduleChainNameMatch( this.module ) ) {
 			return false;
 		}
 
@@ -393,7 +407,7 @@ Test.prototype = {
 		}
 
 		return regexFilter ?
-			this.regexFilter( !!regexFilter[1], regexFilter[2], regexFilter[3], fullName ) :
+			this.regexFilter( !!regexFilter[ 1 ], regexFilter[ 2 ], regexFilter[ 3 ], fullName ) :
 			this.stringFilter( filter, fullName );
 	},
 
@@ -481,8 +495,9 @@ function generateHash( module, testName ) {
 	return hex.slice( -8 );
 }
 
-function synchronize( callback, priority ) {
-	var last = !priority;
+function synchronize( callback, priority, seed ) {
+	var last = !priority,
+		index;
 
 	if ( QUnit.objectType( callback ) === "array" ) {
 		while ( callback.length ) {
@@ -493,6 +508,14 @@ function synchronize( callback, priority ) {
 
 	if ( priority ) {
 		config.queue.splice( priorityCount++, 0, callback );
+	} else if ( seed ) {
+		if ( !unitSampler ) {
+			unitSampler = unitSamplerGenerator( seed );
+		}
+
+		// Insert into a random position after all priority items
+		index = Math.floor( unitSampler() * ( config.queue.length - priorityCount + 1 ) );
+		config.queue.splice( priorityCount + index, 0, callback );
 	} else {
 		config.queue.push( callback );
 	}
@@ -502,6 +525,25 @@ function synchronize( callback, priority ) {
 	}
 }
 
+function unitSamplerGenerator( seed ) {
+
+	// 32-bit xorshift, requires only a nonzero seed
+	// http://excamera.com/sphinx/article-xorshift.html
+	var sample = parseInt( generateHash( seed ), 16 ) || -1;
+	return function() {
+		sample ^= sample << 13;
+		sample ^= sample >>> 17;
+		sample ^= sample << 5;
+
+		// ECMAScript has no unsigned number type
+		if ( sample < 0 ) {
+			sample += 0x100000000;
+		}
+
+		return sample / 0x100000000;
+	};
+}
+
 function saveGlobal() {
 	config.pollution = [];
 
@@ -509,7 +551,7 @@ function saveGlobal() {
 		for ( var key in global ) {
 			if ( hasOwn.call( global, key ) ) {
 
-				// in Opera sometimes DOM element ids show up here, ignore them
+				// In Opera sometimes DOM element ids show up here, ignore them
 				if ( /^qunit-test-output/.test( key ) ) {
 					continue;
 				}
@@ -558,12 +600,12 @@ function test( testName, expected, callback, async ) {
 		expected = null;
 	}
 
-	newTest = new Test({
+	newTest = new Test( {
 		testName: testName,
 		expected: expected,
 		async: async,
 		callback: callback
-	});
+	} );
 
 	newTest.queue();
 }
@@ -572,10 +614,10 @@ function test( testName, expected, callback, async ) {
 function skip( testName ) {
 	if ( focused )  { return; }
 
-	var test = new Test({
+	var test = new Test( {
 		testName: testName,
 		skip: true
-	});
+	} );
 
 	test.queue();
 }
@@ -594,12 +636,12 @@ function only( testName, expected, callback, async ) {
 		expected = null;
 	}
 
-	newTest = new Test({
+	newTest = new Test( {
 		testName: testName,
 		expected: expected,
 		async: async,
 		callback: callback
-	});
+	} );
 
 	newTest.queue();
 }

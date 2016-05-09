@@ -1,6 +1,4 @@
-(function() {
-
-// Don't load the HTML Reporter on non-Browser environments
+// Don't load the HTML Reporter on non-browser environments
 if ( typeof window === "undefined" || !window.document ) {
 	return;
 }
@@ -8,8 +6,7 @@ if ( typeof window === "undefined" || !window.document ) {
 // Deprecated QUnit.init - Ref #530
 // Re-initialize the configuration options
 QUnit.init = function() {
-	var tests, banner, result, qunit,
-		config = QUnit.config;
+	var config = QUnit.config;
 
 	config.stats = { all: 0, bad: 0 };
 	config.moduleStats = { all: 0, bad: 0 };
@@ -21,53 +18,17 @@ QUnit.init = function() {
 	config.filter = "";
 	config.queue = [];
 
-	// Return on non-browser environments
-	// This is necessary to not break on node tests
-	if ( typeof window === "undefined" ) {
-		return;
-	}
-
-	qunit = id( "qunit" );
-	if ( qunit ) {
-		qunit.innerHTML =
-			"<h1 id='qunit-header'>" + escapeText( document.title ) + "</h1>" +
-			"<h2 id='qunit-banner'></h2>" +
-			"<div id='qunit-testrunner-toolbar'></div>" +
-			"<h2 id='qunit-userAgent'></h2>" +
-			"<ol id='qunit-tests'></ol>";
-	}
-
-	tests = id( "qunit-tests" );
-	banner = id( "qunit-banner" );
-	result = id( "qunit-testresult" );
-
-	if ( tests ) {
-		tests.innerHTML = "";
-	}
-
-	if ( banner ) {
-		banner.className = "";
-	}
-
-	if ( result ) {
-		result.parentNode.removeChild( result );
-	}
-
-	if ( tests ) {
-		result = document.createElement( "p" );
-		result.id = "qunit-testresult";
-		result.className = "result";
-		tests.parentNode.insertBefore( result, tests );
-		result.innerHTML = "Running...<br />&#160;";
-	}
+	appendInterface();
 };
 
 var config = QUnit.config,
+	document = window.document,
 	collapseNext = false,
 	hasOwn = Object.prototype.hasOwnProperty,
+	unfilteredUrl = setUrl( { filter: undefined, module: undefined,
+		moduleId: undefined, testId: undefined } ),
 	defined = {
-		document: window.document !== undefined,
-		sessionStorage: (function() {
+		sessionStorage: ( function() {
 			var x = "qunit-test-string";
 			try {
 				sessionStorage.setItem( x, x );
@@ -76,7 +37,7 @@ var config = QUnit.config,
 			} catch ( e ) {
 				return false;
 			}
-		}())
+		}() )
 	},
 	modulesList = [];
 
@@ -103,7 +64,7 @@ function escapeText( s ) {
 		case "&":
 			return "&amp;";
 		}
-	});
+	} );
 }
 
 /**
@@ -118,7 +79,7 @@ function addEvent( elem, type, fn ) {
 		elem.addEventListener( type, fn, false );
 	} else if ( elem.attachEvent ) {
 
-		// support: IE <9
+		// Support: IE <9
 		elem.attachEvent( "on" + type, function() {
 			var event = window.event;
 			if ( !event.target ) {
@@ -126,7 +87,7 @@ function addEvent( elem, type, fn ) {
 			}
 
 			fn.call( elem, event );
-		});
+		} );
 	}
 }
 
@@ -152,11 +113,11 @@ function addClass( elem, name ) {
 	}
 }
 
-function toggleClass( elem, name ) {
-	if ( hasClass( elem, name ) ) {
-		removeClass( elem, name );
-	} else {
+function toggleClass( elem, name, force ) {
+	if ( force || typeof force === "undefined" && !hasClass( elem, name ) ) {
 		addClass( elem, name );
+	} else {
+		removeClass( elem, name );
 	}
 }
 
@@ -168,22 +129,24 @@ function removeClass( elem, name ) {
 		set = set.replace( " " + name + " ", " " );
 	}
 
-	// trim for prettiness
+	// Trim for prettiness
 	elem.className = typeof set.trim === "function" ? set.trim() : set.replace( /^\s+|\s+$/g, "" );
 }
 
 function id( name ) {
-	return defined.document && document.getElementById && document.getElementById( name );
+	return document.getElementById && document.getElementById( name );
 }
 
 function getUrlConfigHtml() {
 	var i, j, val,
 		escaped, escapedTooltip,
 		selection = false,
-		len = config.urlConfig.length,
+		urlConfig = config.urlConfig,
 		urlConfigHtml = "";
 
-	for ( i = 0; i < len; i++ ) {
+	for ( i = 0; i < urlConfig.length; i++ ) {
+
+		// Options can be either strings or objects with nonempty "id" properties
 		val = config.urlConfig[ i ];
 		if ( typeof val === "string" ) {
 			val = {
@@ -194,10 +157,6 @@ function getUrlConfigHtml() {
 
 		escaped = escapeText( val.id );
 		escapedTooltip = escapeText( val.tooltip );
-
-		if ( config[ val.id ] === undefined ) {
-			config[ val.id ] = QUnit.urlParams[ val.id ];
-		}
 
 		if ( !val.value || typeof val.value === "string" ) {
 			urlConfigHtml += "<input id='qunit-urlconfig-" + escaped +
@@ -245,7 +204,7 @@ function getUrlConfigHtml() {
 // Handle "click" events on toolbar checkboxes and "change" for select menus.
 // Updates the URL with the new state of `config.urlConfig` values.
 function toolbarChanged() {
-	var updatedUrl, value,
+	var updatedUrl, value, tests,
 		field = this,
 		params = {};
 
@@ -259,15 +218,14 @@ function toolbarChanged() {
 	params[ field.name ] = value;
 	updatedUrl = setUrl( params );
 
+	// Check if we can apply the change without a page refresh
 	if ( "hidepassed" === field.name && "replaceState" in window.history ) {
+		QUnit.urlParams[ field.name ] = value;
 		config[ field.name ] = value || false;
-		if ( value ) {
-			addClass( id( "qunit-tests" ), "hidepass" );
-		} else {
-			removeClass( id( "qunit-tests" ), "hidepass" );
+		tests = id( "qunit-tests" );
+		if ( tests ) {
+			toggleClass( tests, "hidepass", value || false );
 		}
-
-		// It is not necessary to refresh the whole page
 		window.history.replaceState( null, "", updatedUrl );
 	} else {
 		window.location = updatedUrl;
@@ -275,21 +233,26 @@ function toolbarChanged() {
 }
 
 function setUrl( params ) {
-	var key,
-		querystring = "?";
+	var key, arrValue, i,
+		querystring = "?",
+		location = window.location;
 
 	params = QUnit.extend( QUnit.extend( {}, QUnit.urlParams ), params );
 
 	for ( key in params ) {
-		if ( hasOwn.call( params, key ) ) {
-			if ( params[ key ] === undefined ) {
-				continue;
+
+		// Skip inherited or undefined properties
+		if ( hasOwn.call( params, key ) && params[ key ] !== undefined ) {
+
+			// Output a parameter for each value of this key (but usually just one)
+			arrValue = [].concat( params[ key ] );
+			for ( i = 0; i < arrValue.length; i++ ) {
+				querystring += encodeURIComponent( key );
+				if ( arrValue[ i ] !== true ) {
+					querystring += "=" + encodeURIComponent( arrValue[ i ] );
+				}
+				querystring += "&";
 			}
-			querystring += encodeURIComponent( key );
-			if ( params[ key ] !== true ) {
-				querystring += "=" + encodeURIComponent( params[ key ] );
-			}
-			querystring += "&";
 		}
 	}
 	return location.protocol + "//" + location.host +
@@ -305,13 +268,14 @@ function applyUrlParams() {
 		decodeURIComponent( modulesList.options[ modulesList.selectedIndex ].value ) :
 		undefined;
 
-	window.location = setUrl({
+	window.location = setUrl( {
 		module: ( selectedModule === "" ) ? undefined : selectedModule,
 		filter: ( filter === "" ) ? undefined : filter,
 
-		// Remove testId filter
+		// Remove moduleId and testId filters
+		moduleId: undefined,
 		testId: undefined
-	});
+	} );
 }
 
 function toolbarUrlConfigContainer() {
@@ -358,7 +322,7 @@ function toolbarLooseFilter() {
 		}
 
 		return false;
-	});
+	} );
 
 	return filter;
 }
@@ -370,10 +334,6 @@ function toolbarModuleFilterHtml() {
 	if ( !modulesList.length ) {
 		return false;
 	}
-
-	modulesList.sort(function( a, b ) {
-		return a.localeCompare( b );
-	});
 
 	moduleFilterHtml += "<label for='qunit-modulefilter'>Module: </label>" +
 		"<select id='qunit-modulefilter' name='modulefilter'><option value='' " +
@@ -414,6 +374,7 @@ function appendToolbar() {
 	if ( toolbar ) {
 		toolbar.appendChild( toolbarUrlConfigContainer() );
 		toolbar.appendChild( toolbarLooseFilter() );
+		toolbarModuleFilter();
 	}
 }
 
@@ -421,9 +382,8 @@ function appendHeader() {
 	var header = id( "qunit-header" );
 
 	if ( header ) {
-		header.innerHTML = "<a href='" +
-			escapeText( setUrl( { filter: undefined, module: undefined, testId: undefined } ) ) +
-			"'>" + header.innerHTML + "</a> ";
+		header.innerHTML = "<a href='" + escapeText( unfilteredUrl ) + "'>" + header.innerHTML +
+			"</a> ";
 	}
 }
 
@@ -466,10 +426,10 @@ function appendFilteredTest() {
 		return "";
 	}
 	return "<div id='qunit-filteredTest'>Rerunning selected tests: " +
-		escapeText( testId.join(", ") ) +
+		escapeText( testId.join( ", " ) ) +
 		" <a id='qunit-clearFilter' href='" +
-		escapeText( setUrl( { filter: undefined, module: undefined, testId: undefined } ) ) +
-		"'>" + "Run all tests" + "</a></div>";
+		escapeText( unfilteredUrl ) +
+		"'>Run all tests</a></div>";
 }
 
 function appendUserAgent() {
@@ -485,15 +445,31 @@ function appendUserAgent() {
 	}
 }
 
+function appendInterface() {
+	var qunit = id( "qunit" );
+
+	if ( qunit ) {
+		qunit.innerHTML =
+			"<h1 id='qunit-header'>" + escapeText( document.title ) + "</h1>" +
+			"<h2 id='qunit-banner'></h2>" +
+			"<div id='qunit-testrunner-toolbar'></div>" +
+			appendFilteredTest() +
+			"<h2 id='qunit-userAgent'></h2>" +
+			"<ol id='qunit-tests'></ol>";
+	}
+
+	appendHeader();
+	appendBanner();
+	appendTestResults();
+	appendUserAgent();
+	appendToolbar();
+}
+
 function appendTestsList( modules ) {
 	var i, l, x, z, test, moduleObj;
 
 	for ( i = 0, l = modules.length; i < l; i++ ) {
 		moduleObj = modules[ i ];
-
-		if ( moduleObj.name ) {
-			modulesList.push( moduleObj.name );
-		}
 
 		for ( x = 0, z = moduleObj.tests.length; x < z; x++ ) {
 			test = moduleObj.tests[ x ];
@@ -516,7 +492,7 @@ function appendTest( name, testId, moduleName ) {
 
 	rerunTrigger = document.createElement( "a" );
 	rerunTrigger.innerHTML = "Rerun";
-	rerunTrigger.href = setUrl({ testId: testId });
+	rerunTrigger.href = setUrl( { testId: testId } );
 
 	testBlock = document.createElement( "li" );
 	testBlock.appendChild( title );
@@ -532,36 +508,33 @@ function appendTest( name, testId, moduleName ) {
 }
 
 // HTML Reporter initialization and load
-QUnit.begin(function( details ) {
-	var qunit = id( "qunit" );
+QUnit.begin( function( details ) {
+	var i, moduleObj, tests;
 
-	// Fixture is the only one necessary to run without the #qunit element
+	// Sort modules by name for the picker
+	for ( i = 0; i < details.modules.length; i++ ) {
+		moduleObj = details.modules[ i ];
+		if ( moduleObj.name ) {
+			modulesList.push( moduleObj.name );
+		}
+	}
+	modulesList.sort( function( a, b ) {
+		return a.localeCompare( b );
+	} );
+
+	// Capture fixture HTML from the page
 	storeFixture();
 
-	if ( qunit ) {
-		qunit.innerHTML =
-			"<h1 id='qunit-header'>" + escapeText( document.title ) + "</h1>" +
-			"<h2 id='qunit-banner'></h2>" +
-			"<div id='qunit-testrunner-toolbar'></div>" +
-			appendFilteredTest() +
-			"<h2 id='qunit-userAgent'></h2>" +
-			"<ol id='qunit-tests'></ol>";
-	}
-
-	appendHeader();
-	appendBanner();
-	appendTestResults();
-	appendUserAgent();
-	appendToolbar();
+	// Initialize QUnit elements
+	appendInterface();
 	appendTestsList( details.modules );
-	toolbarModuleFilter();
-
-	if ( qunit && config.hidepassed ) {
-		addClass( qunit.lastChild, "hidepass" );
+	tests = id( "qunit-tests" );
+	if ( tests && config.hidepassed ) {
+		addClass( tests, "hidepass" );
 	}
-});
+} );
 
-QUnit.done(function( details ) {
+QUnit.done( function( details ) {
 	var i, key,
 		banner = id( "qunit-banner" ),
 		tests = id( "qunit-tests" ),
@@ -586,9 +559,9 @@ QUnit.done(function( details ) {
 		id( "qunit-testresult" ).innerHTML = html;
 	}
 
-	if ( config.altertitle && defined.document && document.title ) {
+	if ( config.altertitle && document.title ) {
 
-		// show ✖ for good, ✔ for bad suite result in title
+		// Show ✖ for good, ✔ for bad suite result in title
 		// use escape sequences in case file gets loaded with non-utf-8-charset
 		document.title = [
 			( details.failed ? "\u2716" : "\u2714" ),
@@ -596,7 +569,7 @@ QUnit.done(function( details ) {
 		].join( " " );
 	}
 
-	// clear own sessionStorage items if all tests passed
+	// Clear own sessionStorage items if all tests passed
 	if ( config.reorder && defined.sessionStorage && details.failed === 0 ) {
 		for ( i = 0; i < sessionStorage.length; i++ ) {
 			key = sessionStorage.key( i++ );
@@ -606,11 +579,11 @@ QUnit.done(function( details ) {
 		}
 	}
 
-	// scroll back to top to show results
+	// Scroll back to top to show results
 	if ( config.scrolltop && window.scrollTo ) {
 		window.scrollTo( 0, 0 );
 	}
-});
+} );
 
 function getNameHtml( name, module ) {
 	var nameHtml = "";
@@ -624,7 +597,7 @@ function getNameHtml( name, module ) {
 	return nameHtml;
 }
 
-QUnit.testStart(function( details ) {
+QUnit.testStart( function( details ) {
 	var running, testBlock, bad;
 
 	testBlock = id( "qunit-test-output-" + details.testId );
@@ -647,14 +620,15 @@ QUnit.testStart(function( details ) {
 			getNameHtml( details.name, details.module );
 	}
 
-});
+} );
 
 function stripHtml( string ) {
-	// strip tags, html entity and whitespaces
-	return string.replace(/<\/?[^>]+(>|$)/g, "").replace(/\&quot;/g, "").replace(/\s+/g, "");
+
+	// Strip tags, html entity and whitespaces
+	return string.replace( /<\/?[^>]+(>|$)/g, "" ).replace( /\&quot;/g, "" ).replace( /\s+/g, "" );
 }
 
-QUnit.log(function( details ) {
+QUnit.log( function( details ) {
 	var assertList, assertLi,
 		message, expected, actual, diff,
 		showDiff = false,
@@ -668,25 +642,25 @@ QUnit.log(function( details ) {
 	message = "<span class='test-message'>" + message + "</span>";
 	message += "<span class='runtime'>@ " + details.runtime + " ms</span>";
 
-	// pushFailure doesn't provide details.expected
+	// The pushFailure doesn't provide details.expected
 	// when it calls, it's implicit to also not show expected and diff stuff
 	// Also, we need to check details.expected existence, as it can exist and be undefined
 	if ( !details.result && hasOwn.call( details, "expected" ) ) {
 		if ( details.negative ) {
-			expected = escapeText( "NOT " + QUnit.dump.parse( details.expected ) );
+			expected = "NOT " + QUnit.dump.parse( details.expected );
 		} else {
-			expected = escapeText( QUnit.dump.parse( details.expected ) );
+			expected = QUnit.dump.parse( details.expected );
 		}
 
-		actual = escapeText( QUnit.dump.parse( details.actual ) );
+		actual = QUnit.dump.parse( details.actual );
 		message += "<table><tr class='test-expected'><th>Expected: </th><td><pre>" +
-			expected +
+			escapeText( expected ) +
 			"</pre></td></tr>";
 
 		if ( actual !== expected ) {
 
 			message += "<tr class='test-actual'><th>Result: </th><td><pre>" +
-				actual + "</pre></td></tr>";
+				escapeText( actual ) + "</pre></td></tr>";
 
 			// Don't show diff if actual or expected are booleans
 			if ( !( /^(true|false)$/.test( actual ) ) &&
@@ -710,6 +684,10 @@ QUnit.log(function( details ) {
 				" run with a higher max depth or <a href='" +
 				escapeText( setUrl( { maxDepth: -1 } ) ) + "'>" +
 				"Rerun</a> without max depth.</p></td></tr>";
+		} else {
+			message += "<tr class='test-message'><th>Message: </th><td>" +
+				"Diff suppressed as the expected and actual results have an equivalent" +
+				" serialization</td></tr>";
 		}
 
 		if ( details.source ) {
@@ -719,7 +697,7 @@ QUnit.log(function( details ) {
 
 		message += "</table>";
 
-	// this occurs when pushFailure is set and we have an extracted stack trace
+	// This occurs when pushFailure is set and we have an extracted stack trace
 	} else if ( !details.result && details.source ) {
 		message += "<table>" +
 			"<tr class='test-source'><th>Source: </th><td><pre>" +
@@ -733,9 +711,9 @@ QUnit.log(function( details ) {
 	assertLi.className = details.result ? "pass" : "fail";
 	assertLi.innerHTML = message;
 	assertList.appendChild( assertLi );
-});
+} );
 
-QUnit.testDone(function( details ) {
+QUnit.testDone( function( details ) {
 	var testTitle, time, testItem, assertList,
 		good, bad, testCounts, skipped, sourceName,
 		tests = id( "qunit-tests" );
@@ -751,7 +729,7 @@ QUnit.testDone(function( details ) {
 	good = details.passed;
 	bad = details.failed;
 
-	// store result when possible
+	// Store result when possible
 	if ( config.reorder && defined.sessionStorage ) {
 		if ( bad ) {
 			sessionStorage.setItem( "qunit-test-" + details.module + "-" + details.name, bad );
@@ -774,7 +752,7 @@ QUnit.testDone(function( details ) {
 		addClass( assertList, "qunit-collapsed" );
 	}
 
-	// testItem.firstChild is the test name
+	// The testItem.firstChild is the test name
 	testTitle = testItem.firstChild;
 
 	testCounts = bad ?
@@ -793,7 +771,7 @@ QUnit.testDone(function( details ) {
 	} else {
 		addEvent( testTitle, "click", function() {
 			toggleClass( assertList, "qunit-collapsed" );
-		});
+		} );
 
 		testItem.className = bad ? "fail" : "pass";
 
@@ -813,27 +791,19 @@ QUnit.testDone(function( details ) {
 		}
 		addEvent( testTitle, "click", function() {
 			toggleClass( sourceName, "qunit-collapsed" );
-		});
+		} );
 		testItem.appendChild( sourceName );
 	}
-});
+} );
 
-if ( defined.document ) {
+// Avoid readyState issue with phantomjs
+// Ref: #818
+var notPhantom = ( function( p ) {
+	return !( p && p.version && p.version.major > 0 );
+} )( window.phantom );
 
-	// Avoid readyState issue with phantomjs
-	// Ref: #818
-	var notPhantom = ( function( p ) {
-		return !( p && p.version && p.version.major > 0 );
-	} )( window.phantom );
-
-	if ( notPhantom && document.readyState === "complete" ) {
-		QUnit.load();
-	} else {
-		addEvent( window, "load", QUnit.load );
-	}
+if ( notPhantom && document.readyState === "complete" ) {
+	QUnit.load();
 } else {
-	config.pageLoaded = true;
-	config.autorun = true;
+	addEvent( window, "load", QUnit.load );
 }
-
-})();

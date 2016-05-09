@@ -1,6 +1,12 @@
 (function(root,factory) {
      
-    if (typeof define == 'function' && define.amd) define("jsyg-stdconstruct",["jquery","jsyg-events"],factory);
+    if (typeof module == "object" && typeof module.exports == "object") {
+       module.exports = factory( require("jquery","jsyg-events") );
+    }
+    else if (typeof define == 'function' && define.amd) {
+      
+      define("jsyg-stdconstruct",["jquery","jsyg-events"],factory);
+    }
     else {
         
         if (typeof jQuery == "undefined") throw new Error("jQuery is needed");

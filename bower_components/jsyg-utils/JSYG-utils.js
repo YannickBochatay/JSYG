@@ -3,7 +3,28 @@
 
 (function(root,factory) {
     
-    if (typeof define == "function" && define.amd) define("jsyg-utils",["jquery","jsyg-wrapper","jsyg-matrix","jsyg-vect","jsyg-point","jsyg-strutils"],factory);
+    if (typeof module == "object" && typeof module.exports == "object" ) {
+      
+      module.exports = factory(
+          require("jquery"),
+          require("jsyg-wrapper"),
+          require("jsyg-matrix"),
+          require("jsyg-vect"),
+          require("jsyg-point"),
+          require("jsyg-strutils")
+      );
+    }
+    if (typeof define == "function" && define.amd) {
+      
+    define("jsyg-utils",[
+        "jquery",
+        "jsyg-wrapper",
+        "jsyg-matrix",
+        "jsyg-vect",
+        "jsyg-point",
+        "jsyg-strutils"
+      ],factory);
+    }
     else if (root.JSYG && root.jQuery) {
         
         if (JSYG.Matrix && JSYG.Vect && JSYG.Point && JSYG.utf8encode) factory(jQuery,JSYG,JSYG.Matrix,JSYG.Vect,JSYG.Point,JSYG);
@@ -1622,7 +1643,7 @@
         this.each(function() {
             
             var $this = new JSYG(this),
-            list;
+            list, newMtx;
             
             if ($this.isSVG()) {
                 
@@ -1632,8 +1653,8 @@
             }
             else if (attr) {
                 
-                mtx = $this.getMtx().multiply(mtx);
-                $this.setMtx(mtx);
+                newMtx = $this.getMtx().multiply(mtx);
+                $this.setMtx(newMtx);
             }
             
         });

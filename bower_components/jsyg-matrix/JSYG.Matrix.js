@@ -1,6 +1,7 @@
 ;(function(root,factory) {
     
-    if (typeof define == 'function' && define.amd) define("jsyg-matrix",["jsyg-vect"],factory);
+    if (typeof module == "object" && typeof module.exports == "object" ) module.exports = factory( require("jsyg-vect") );
+    else if (typeof define == 'function' && define.amd) define("jsyg-matrix",["jsyg-vect"],factory);
     else {
         
         if (typeof JSYG != "undefined") {
@@ -16,7 +17,7 @@
     
     "use strict";
     
-    var svg = this.document && this.document.createElementNS && this.document.createElementNS('http://www.w3.org/2000/svg','svg');
+    var svg = typeof document != "undefined" && document.createElementNS && document.createElementNS('http://www.w3.org/2000/svg','svg');
     
     function round(number,precision) {
         return Math.round(number * Math.pow(10,precision)) / Math.pow(10,precision);
@@ -398,4 +399,4 @@
     
     return Matrix;
     
-}.bind(this));
+});

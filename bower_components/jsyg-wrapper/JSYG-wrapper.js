@@ -1,8 +1,9 @@
 /*jshint forin:false, eqnull:true */
 
 (function(root,factory) {
-	
-    if (typeof define == "function" && define.amd) define("jsyg-wrapper",["jquery"],factory);
+
+    if (typeof module == "object" && typeof module.exports == "object" ) module.exports = factory( require("jquery") );
+    else if (typeof define == "function" && define.amd) define("jsyg-wrapper",["jquery"],factory);
     else if (!root.jQuery) throw new Error("jQuery is needed");
     else root.JSYG = factory(root.jQuery);	
 	

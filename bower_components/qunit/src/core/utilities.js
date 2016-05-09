@@ -1,7 +1,7 @@
 var toString = Object.prototype.toString,
 	hasOwn = Object.prototype.hasOwnProperty;
 
-// returns a new Array with the elements that are in a but not in b
+// Returns a new Array with the elements that are in a but not in b
 function diff( a, b ) {
 	var i, j,
 		result = a.slice();
@@ -18,7 +18,7 @@ function diff( a, b ) {
 	return result;
 }
 
-// from jquery.js
+// From jquery.js
 function inArray( elem, array ) {
 	if ( array.indexOf ) {
 		return array.indexOf( elem );
@@ -111,29 +111,3 @@ function objectType( obj ) {
 function is( type, obj ) {
 	return QUnit.objectType( obj ) === type;
 }
-
-var getUrlParams = function() {
-	var i, param, name, value;
-	var urlParams = {};
-	var location = window.location;
-	var params = location.search.slice( 1 ).split( "&" );
-	var length = params.length;
-
-	for ( i = 0; i < length; i++ ) {
-		if ( params[ i ] ) {
-			param = params[ i ].split( "=" );
-			name = decodeURIComponent( param[ 0 ] );
-
-			// allow just a key to turn on a flag, e.g., test.html?noglobals
-			value = param.length === 1 ||
-				decodeURIComponent( param.slice( 1 ).join( "=" ) ) ;
-			if ( urlParams[ name ] ) {
-				urlParams[ name ] = [].concat( urlParams[ name ], value );
-			} else {
-				urlParams[ name ] = value;
-			}
-		}
-	}
-
-	return urlParams;
-};

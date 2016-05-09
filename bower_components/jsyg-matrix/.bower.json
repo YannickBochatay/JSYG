@@ -36,14 +36,14 @@
     "library"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG.Matrix",
-  "version": "0.1.2",
-  "_release": "0.1.2",
+  "version": "0.1.6",
+  "_release": "0.1.6",
   "_resolution": {
     "type": "version",
-    "tag": "v0.1.2",
-    "commit": "d95b743deb112288669d6728f9228aef80908c40"
+    "tag": "v0.1.6",
+    "commit": "70ba891b13cd8127f346fe3e16e1c65bffb1aeba"
   },
-  "_source": "git://github.com/YannickBochatay/JSYG.Matrix.git",
+  "_source": "https://github.com/YannickBochatay/JSYG.Matrix.git",
   "_target": "*",
   "_originalSource": "jsyg-matrix"
 }

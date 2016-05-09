@@ -36,14 +36,14 @@
     "library"
   ],
   "homepage": "https://github.com/YannickBochatay/JSYG.Vect",
-  "version": "0.1.4",
-  "_release": "0.1.4",
+  "version": "0.1.6",
+  "_release": "0.1.6",
   "_resolution": {
     "type": "version",
-    "tag": "v0.1.4",
-    "commit": "4515dcfec91f0f9ddc6beaff0d67e932a68c1372"
+    "tag": "v0.1.6",
+    "commit": "d6c3a6e870a040afebeef58cf1fdb246445f4070"
   },
-  "_source": "git://github.com/YannickBochatay/JSYG.Vect.git",
+  "_source": "https://github.com/YannickBochatay/JSYG.Vect.git",
   "_target": "*",
   "_originalSource": "jsyg-vect"
 }

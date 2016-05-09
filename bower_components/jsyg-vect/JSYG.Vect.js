@@ -1,6 +1,7 @@
 (function(root,factory) {
     
-    if (typeof define == 'function' && define.amd) define("jsyg-vect",["jsyg-point"],factory);
+    if (typeof module == "object" && typeof module.exports == "object" ) module.exports = factory( require("jsyg-point") );
+    else if (typeof define == 'function' && define.amd) define("jsyg-vect",["jsyg-point"],factory);
     else {
         if (typeof JSYG != "undefined") {
             
