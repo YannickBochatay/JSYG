@@ -12,12 +12,14 @@ module.exports = function (grunt) {
         "jsyg-events/JSYG.Events.js",
         "jsyg-stdconstruct/JSYG.StdConstruct.js",
         "jsyg-vmouse/JSYG-vmouse.js",
-        "isMobile/isMobile.js"
+        "ismobilejs/isMobile.js"
     ];
     
-    files = files.map(function(file) { return "bower_components/"+file; });
+    var rep = "node_modules";
+    
+    files = files.map(function(file) { return rep+"/"+file; });
         
-    files.push("jsyg-amd.js");
+    files.push("JSYG.js");
    
     grunt.initConfig({
       concat: {
@@ -26,7 +28,7 @@ module.exports = function (grunt) {
           },
           dist: {
             src: files,
-            dest: 'JSYG.js',
+            dest: 'dist/JSYG.js'
           },
       }
     });

@@ -1,9 +1,21 @@
 if (typeof require!= "undefined") {
+  
+    var rep = "../node_modules";
     
     require.config({
         paths: {
-            "jsyg": '../JSYG',
-            "jquery":"../bower_components/jquery/dist/jquery"
+            "jsyg" : '../JSYG',
+            "jquery" : rep+"/jquery/dist/jquery",
+            "jsyg-wrapper" : rep+"/jsyg-wrapper/JSYG-wrapper",
+            "jsyg-point" : rep+"/jsyg-point/JSYG.Point",
+            "jsyg-vect" : rep+"/jsyg-vect/JSYG.Vect",
+            "jsyg-matrix" : rep+"/jsyg-matrix/JSYG.Matrix",
+            "jsyg-strutils" : rep+"/jsyg-strutils/JSYG-strutils",
+            "jsyg-utils" : rep+"/jsyg-utils/JSYG-utils",
+            "jsyg-vmouse" : rep+"/jsyg-vmouse/JSYG-vmouse",
+            "jsyg-events" : rep+"/jsyg-events/JSYG.Events",
+            "jsyg-stdconstruct" : rep+"/jsyg-stdconstruct/JSYG.StdConstruct",
+            "isMobile" : rep+"/ismobilejs/isMobile"
         },
         urlArgs: "bust=" + (+new Date())
     });
