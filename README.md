@@ -56,7 +56,8 @@ JSYG("svg").attr({width:400,height:300}).appendTo("body")
 The bower package for [isMobile library](https://github.com/kaimallea/isMobile) doesn't have the same name as the npm package.
 If you use a bundler, you'll may have to define an alias
 
-###### webpack
+##### with webpack
+```javascript
 module.exports = {
   resolve : {
     alias : {
@@ -64,3 +65,4 @@ module.exports = {
     }
   }
 }
+```
