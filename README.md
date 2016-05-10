@@ -28,7 +28,6 @@ bower install jsyg
 ```
 
 
-
 ### Usage
 
 ##### es6 modules (webpack+babel)
@@ -51,3 +50,17 @@ JSYG("svg").attr({width:400,height:300}).appendTo("body")
   JSYG("svg").attr({width:400,height:300}).appendTo("body")
 </script>
 ```
+
+### Warning
+
+The bower package for [isMobile library](https://github.com/kaimallea/isMobile) doesn't have the same name as the npm package.
+If you use a bundler, you'll may have to define an alias
+
+###### webpack
+module.exports = {
+  resolve : {
+    alias : {
+      isMobile : "ismobilejs"
+    }
+  }
+}
