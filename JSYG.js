@@ -6,7 +6,6 @@
       require("jsyg-utils"),
       require("jsyg-events"),
       require("jsyg-stdconstruct"),
-      require("ismobilejs"),
       require("jsyg-vmouse")
     );
 
@@ -17,7 +16,6 @@
           "jsyg-utils",
           "jsyg-events",
           "jsyg-stdconstruct",
-          "isMobile",
           "jsyg-vmouse"
       ],
       factory);
@@ -29,7 +27,6 @@
 
     JSYG.Events = Events;
     JSYG.StdConstruct = StdConstruct;
-    JSYG.isMobile = isMobile;
 
     return JSYG;        
 }))

@@ -11,8 +11,6 @@ It's just a pooling of modules :
 * [jsyg-events](https://github.com/YannickBochatay/JSYG.Events)
 * [jsyg-stdconstruct](https://github.com/YannickBochatay/JSYG.StdConstruct)
 
-It also includes jquery virtual mouse bindings, and [isMobile](https://github.com/kaimallea/isMobile) library.
-
 Each of these modules can be used standalone if you don't need JSYG framework.
 
 ### Installation
@@ -49,20 +47,4 @@ JSYG("svg").attr({width:400,height:300}).appendTo("body")
 <script>
   JSYG("svg").attr({width:400,height:300}).appendTo("body")
 </script>
-```
-
-### Warning
-
-The bower package for [isMobile library](https://github.com/kaimallea/isMobile) doesn't have the same name as the npm package.
-If you use a bundler, you'll may have to define an alias
-
-##### with webpack
-```javascript
-module.exports = {
-  resolve : {
-    alias : {
-      isMobile : "ismobilejs"
-    }
-  }
-}
 ```

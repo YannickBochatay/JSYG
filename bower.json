@@ -13,8 +13,7 @@
   "dependencies": {
     "jsyg-utils": "latest",
     "jsyg-stdconstruct": "latest",
-    "jsyg-vmouse": "latest",
-    "isMobile": "latest"
+    "jsyg-vmouse": "latest"
   },
   "devDependencies": {
     "qunit": "latest",

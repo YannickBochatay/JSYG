@@ -11,8 +11,7 @@ module.exports = function (grunt) {
         "jsyg-utils/JSYG-utils.js",
         "jsyg-events/JSYG.Events.js",
         "jsyg-stdconstruct/JSYG.StdConstruct.js",
-        "jsyg-vmouse/JSYG-vmouse.js",
-        "ismobilejs/isMobile.js"
+        "jsyg-vmouse/JSYG-vmouse.js"
     ];
     
     var rep = "node_modules";
