@@ -1,6 +1,6 @@
 {
   "name": "jsyg",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Core of JSYG framework",
   "main": "JSYG.js",
   "directories": {

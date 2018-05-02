@@ -20,10 +20,9 @@
       ],
       factory);
   }
-  else if (typeof JSYG!= "undefined" && typeof isMobile != "undefined") JSYG.isMobile = isMobile;
-  else throw new Error("dependency is missing");
+  else if (typeof JSYG === "undefined") throw new Error("dependency is missing");
   
-}(function(JSYG,Events,StdConstruct,isMobile) {
+}(function(JSYG,Events,StdConstruct) {
 
     JSYG.Events = Events;
     JSYG.StdConstruct = StdConstruct;
