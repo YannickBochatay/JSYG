@@ -5,8 +5,7 @@
     module.exports = factory(
       require("jsyg-utils"),
       require("jsyg-events"),
-      require("jsyg-stdconstruct"),
-      require("jsyg-vmouse")
+      require("jsyg-stdconstruct")
     );
 
   }
@@ -15,8 +14,7 @@
       define("jsyg",[
           "jsyg-utils",
           "jsyg-events",
-          "jsyg-stdconstruct",
-          "jsyg-vmouse"
+          "jsyg-stdconstruct"
       ],
       factory);
   }

@@ -20,23 +20,11 @@ Each of these modules can be used standalone if you don't need JSYG framework.
 npm install jsyg
 ```
 
-##### with bower
-```shell
-bower install jsyg
-```
-
-
 ### Usage
 
-##### es6 modules (webpack+babel)
+##### with module loader
 ```javascript
 import JSYG from "jsyg"
-JSYG("svg").attr({width:400,height:300}).appendTo("body")
-```
-
-##### browserify
-```javascript
-var JSYG = require("jsyg");
 JSYG("svg").attr({width:400,height:300}).appendTo("body")
 ```
 
