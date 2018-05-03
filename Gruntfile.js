@@ -10,8 +10,7 @@ module.exports = function (grunt) {
         "jsyg-strutils/JSYG-strutils.js",
         "jsyg-utils/JSYG-utils.js",
         "jsyg-events/JSYG.Events.js",
-        "jsyg-stdconstruct/JSYG.StdConstruct.js",
-        "jsyg-vmouse/JSYG-vmouse.js"
+        "jsyg-stdconstruct/JSYG.StdConstruct.js"
     ];
     
     var rep = "node_modules";
