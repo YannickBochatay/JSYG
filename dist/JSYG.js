@@ -3117,7 +3117,7 @@
     JSYG.prototype.mtx2attrs = function(opt) {
         
         if (opt instanceof Matrix) opt = {mtx:opt};
-        else opt = Object.assign({},opt);
+        else opt = JSYG.extend({},opt);
         
         this.each(function() {
             
