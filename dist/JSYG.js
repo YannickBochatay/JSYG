@@ -2358,7 +2358,7 @@
             $this = new JSYG(this),
             node = this;
             
-            if (('keepRatio' in opt) && ('width' in opt || 'height' in opt)) {
+            if (opt.keepRatio && ('width' in opt || 'height' in opt)) {
                 dim = $this.getDim();
                 if (!('width' in opt)) opt.width = dim.width * opt.height / dim.height;
                 else if (!('height' in opt)) opt.height = dim.height * opt.width / dim.width;
@@ -3003,12 +3003,12 @@
                 
                 if (arg instanceof JSYG) arg = arg[0];
                 
-                //mtx = this[0].getTransformToElement(arg[0] || arg); //bug avec chrome
-                
                 mtx = arg.getScreenCTM() || svg.createSVGMatrix();			
                 mtx = mtx.inverse().multiply( this[0].getScreenCTM() );
                 
-                if (this.getTag() == 'svg') mtx = mtx.translate(-this.attr('x') || 0,-this.attr('y') || 0) ; //la matrice tient compte des attributs x et y dans ce cas...
+                if (this.getTag() == 'svg' && JSYG.support.transformToElementAddXY) {
+                    mtx = mtx.translate(-this.attr('x') || 0,-this.attr('y') || 0);
+                }
             }
             
         } else {
@@ -3667,7 +3667,20 @@
         JSYG.support.svgUseTransform = use[0].getTransformToElement(svg).e !== 0;
         
         use.remove();
-        defs.remove();			
+        defs.remove();
+
+        JSYG.support.transformToElementAddXY = (function() {
+            var svg2 = new JSYG("<svg/>")
+                .attr({ x : 10, y : 10, width : 50, height : 50 })
+                .appendTo(svg)
+
+            var x = svg2[0].getTransformToElement(svg).e
+
+            svg2.remove()
+
+            return x === 10
+        }())
+        
         document.body.removeChild(svg);
         
         
