@@ -1,6 +1,6 @@
 {
   "name": "jsyg",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Core of JSYG framework",
   "main": "JSYG.js",
   "directories": {
@@ -40,7 +40,7 @@
     "jsyg-point": "^1.0.1",
     "jsyg-stdconstruct": "^1.0.0",
     "jsyg-strutils": "^1.0.0",
-    "jsyg-utils": "^1.0.3",
+    "jsyg-utils": "^1.0.4",
     "jsyg-vect": "^1.0.2",
     "jsyg-wrapper": "^1.0.0"
   }
