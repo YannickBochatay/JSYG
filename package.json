@@ -1,6 +1,6 @@
 {
   "name": "jsyg",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Core of JSYG framework",
   "main": "JSYG.js",
   "directories": {
@@ -34,7 +34,7 @@
     "requirejs": "^2.3.5"
   },
   "dependencies": {
-    "jquery": "^3.3.1",
+    "jquery": "^3.7.1",
     "jsyg-events": "^1.0.0",
     "jsyg-matrix": "^1.0.0",
     "jsyg-point": "^1.0.1",
@@ -42,6 +42,6 @@
     "jsyg-strutils": "^1.0.0",
     "jsyg-utils": "^1.0.4",
     "jsyg-vect": "^1.0.2",
-    "jsyg-wrapper": "^1.0.0"
+    "jsyg-wrapper": "^1.1.0"
   }
 }
