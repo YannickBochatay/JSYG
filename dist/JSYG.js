@@ -121,7 +121,11 @@
     function xlinkHref(val) {
 				
         if (val == null) {
-            return (this.isSVG() ? this[0].getAttributeNS(NS.xlink,'href') : this[0].href) || "";
+            if (this.isSVG()) {
+                return this[0].getAttribute('href') || this[0].getAttributeNS(NS.xlink,'href') || "";
+            } else {
+                return this[0].href || "";
+            }
         }
 				
         this.each(function() {
@@ -129,7 +133,7 @@
             if (isSVG(this)){
 				
                 this.removeAttributeNS(NS.xlink,'href'); //sinon ajoute un nouvel attribut
-                this.setAttributeNS(NS.xlink,'href',val);
+                this.setAttribute('href',val);
             } 
             else this.href = val;
         });
@@ -142,7 +146,7 @@
         this.each(function() {
 				
             if (isSVG(this)) this.removeAttributeNS(NS.xlink,'href');
-            else this.removeAttribute("href");
+            this.removeAttribute("href");
         });
 		
         return this;
@@ -228,6 +232,14 @@
         }
         else return $.makeArray(list);		
     };
+
+    function getFarthestViewportElement(elmt) {
+        var viewport = elmt.viewportElement;
+    
+        while (viewport && viewport.viewportElement) viewport = viewport.viewportElement;
+    
+        return viewport;
+    }
 	
     JSYG.prototype.offsetParent = function(arg) {
 		
@@ -243,8 +255,8 @@
 				
                 if (!$this.isSVGroot()) {
 					
-                    if (arg === 'farthest') elmt = this.farthestViewportElement;
-                    else elmt = this.nearestViewportElement;
+                    if (arg === 'farthest') elmt = getFarthestViewportElement(this);
+                    else elmt = this.viewportElement;
 					
                     if (!elmt) { //les éléments non tracés (dans une balise defs) ne renvoient rien, par simplicité on renvoit la balise svg parente
 						
@@ -1448,7 +1460,7 @@
           require("jsyg-strutils")
       );
     }
-    if (typeof define == "function" && define.amd) {
+    else if (typeof define == "function" && define.amd) {
       
     define("jsyg-utils",[
         "jsyg-wrapper",
@@ -1767,6 +1779,7 @@
             }
             
             if (!isSVG) this.setAttribute('style',styleAttr);
+            else if (style.length) this.removeAttribute("style");
         }
         
         if (recursive) this.walkTheDom(fct);
@@ -3920,7 +3933,6 @@
             jNode.walkTheDom(function() {
                 var $this = new JSYG(this);
                 $this.style2attr();
-                if (JSYG.svgGraphics.indexOf($this.getTag()) != -1) $this.removeAttr("style");
             });
         }
         
@@ -4516,7 +4528,7 @@ return JSYG;
 
 (function(factory) {
 
-  if (typeof module == "object" && typeof module.export == "object") {
+  if (typeof module == "object" && typeof module.exports == "object") {
     
     module.exports = factory(
       require("jsyg-utils"),
