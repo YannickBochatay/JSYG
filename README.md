@@ -1,6 +1,8 @@
 # JSYG
 Core of JSYG framework
 
+## ⚠️ Deprecated. Use [@jsyg/core](https://github.com/YannickBochatay/jsyg-monorepo/tree/main/packages/core) instead.
+
 It's just a pooling of modules :
 * [jsyg-wrapper](https://github.com/YannickBochatay/JSYG-wrapper)
 * [jsyg-point](https://github.com/YannickBochatay/JSYG.Point)
